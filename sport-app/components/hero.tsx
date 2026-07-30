@@ -13,7 +13,7 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/hero.png"
+          src="/hero12.png"
           alt="Grassroots football action"
           fill
           priority

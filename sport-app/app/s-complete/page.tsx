@@ -1,11 +1,30 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check } from 'lucide-react';
 
 export default function SquadComplete() {
   const router = useRouter();
+  const [countdown, setCountdown] = useState(5); // 5-second countdown
+
+  useEffect(() => {
+    // ⏱️ Decrement the countdown state every second
+    const interval = setInterval(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    // Automatically redirect after 5 seconds
+    const timer = setTimeout(() => {
+      router.push('/secondary-squad'); 
+    }, 5000);
+
+    // Clean up timers on unmount
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
+  }, [router]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden">
@@ -14,7 +33,7 @@ export default function SquadComplete() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
         style={{ backgroundImage: `url('/hero.png')` }}
       />
-      {/* Dark  Layer */}
+      {/* Dark Layer */}
       <div className="absolute inset-0 bg-slate-950/50" />
 
       {/*  Glass Modal Card */}
@@ -24,7 +43,7 @@ export default function SquadComplete() {
         <div className="w-full flex justify-start relative z-10 mb-2">
           <button 
             type="button"
-            onClick={() => router.push('/#')}
+            onClick={() => router.push('/secondary-playreg')}
             className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors duration-150"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -37,7 +56,7 @@ export default function SquadComplete() {
           <div className="mb-6 flex justify-center">
             <img 
               src="/secondary.png" 
-              alt="The Nathaniel Idowu Under 16 Football League" 
+              alt="The Nathaniel Idowu Secondary Football League" 
               className="h-28 w-auto object-contain drop-shadow-md"
             />
           </div>
@@ -58,6 +77,12 @@ export default function SquadComplete() {
           <p className="text-xs text-slate-300 max-w-xs leading-relaxed">
             Great job! You have successfully registered your 18 players.
           </p>
+        </div>
+
+        {/*  Redirect Countdown Badge */}
+        <div className="relative z-10 mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-[11px] text-slate-300 backdrop-blur-sm">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Redirecting in <strong className="text-white font-mono">{countdown}s</strong>...</span>
         </div>
 
       </div>

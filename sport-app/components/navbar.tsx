@@ -14,7 +14,6 @@ const navLinks: NavLink[] = [
   { label: 'Home', href: '/Homepage' },
   { label: 'About Us', href: '/about' },
   { label: 'News & Updates', href: '/news' },
-  { label: 'Competitions', href: '/competitions' },
   { label: 'Photo Gallery', href: '/gallery' },
 ];
 
@@ -23,7 +22,7 @@ const navLinks: NavLink[] = [
     return (
      
      <nav className="bg-slate-900 text-slate-100 md:px-9 shadow-lg border-b border-slate-700">
-        <div className="w-full flex justify-between items-center gap-4">
+    <div className="w-full flex justify-between items-center gap-4">
 
       {/* Logo*/}
         <div className="flex items-center">
@@ -32,15 +31,15 @@ const navLinks: NavLink[] = [
               src="/logo.png"       
               alt="Page Logo" 
               width={200}            
-              height={80}          
-              className="object-contain" 
+              height={200}          
+              className="object-contain w-20 h-20 md:w-40 md:h-40" 
             />
             
           </Link>
         </div>
             
       {/* Navigation Links */}
-        <ul className="flex items-center gap-10 font-medium">
+        <ul className="hidden md:flex items-center gap-10 font-medium">
           <li>
             <Link href="/Homepage" className="text-green-500 font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 hover:text-yellow-400 transition-colors duration-300">
               Home
@@ -56,11 +55,7 @@ const navLinks: NavLink[] = [
               News & Updates
             </Link>
           </li>
-          <li>
-            <Link href="/competitions" className="font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 transition-colors duration-300">
-              Competitions
-            </Link>
-          </li>
+         
           <li>
             <Link href="/gallery" className="font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 transition-colors duration-300">
               Photo Gallery

@@ -14,7 +14,6 @@ const navLinks: NavLink[] = [
   { label: 'Home', href: '/Homepage' },
   { label: 'About Us', href: '/about' },
   { label: 'News & Updates', href: '/news' },
-  { label: 'Competitions', href: '/competitions' },
   { label: 'Photo Gallery', href: '/gallery' },
 ];
 
@@ -56,11 +55,7 @@ const navLinks: NavLink[] = [
               News & Updates
             </Link>
           </li>
-            <li>
-            <Link href="/competitions" className="  font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 transition-colors duration-300">
-              Competitions
-            </Link>
-          </li>
+           
           <li>
             <Link href="/gallery" className="font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 transition-colors duration-300">
               Photo Gallery
