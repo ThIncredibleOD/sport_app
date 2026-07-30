@@ -1,9 +1,8 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, Play } from 'lucide-react';
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight, Play } from "lucide-react";
 
 export default function Hero() {
   return (
@@ -29,19 +28,19 @@ export default function Hero() {
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white tracking-tight leading-none uppercase">
             More Than <br />
             A Game <br />
-          <span className="text-amber-400">We Are <br/>
-                A Movement.   </span>  
+            <span className="text-amber-400">
+              We Are <br />A Movement.{" "}
+            </span>
           </h1>
 
           <p className="mt-6 text-base md:text-lg text-slate-300 font-medium max-w-lg leading-relaxed">
-          In Peakline we believe in the power of sport
-           to transform lives, build character, and unite communities.
-            We are creating a new era of sports excellence.
+            In Peakline we believe in the power of sport to transform lives,
+            build character, and unite communities. We are creating a new era of
+            sports excellence.
           </p>
 
           {/* Glass Button Group Container */}
           <div className="mt-10 flex flex-wrap gap-4 items-center">
-            
             {/* Button 1: Green Glass Button */}
             <Link
               href="#leagues"
@@ -50,7 +49,6 @@ export default function Hero() {
               Explore Our Leagues
               <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
-
           </div>
         </div>
       </div>

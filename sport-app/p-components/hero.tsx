@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ImageIcon, Calendar, Trophy } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { ImageIcon, Calendar, Trophy } from "lucide-react";
 
 export default function Hero() {
   return (
@@ -35,16 +35,19 @@ export default function Hero() {
           </h1>
 
           <p className="mt-6 text-base md:text-lg text-slate-300 font-medium leading-relaxed">
-            In Peakline we believe in the power of sport to transform lives, build character, and unite communities. We are creating a new era of sports excellence.
+            In Peakline we believe in the power of sport to transform lives,
+            build character, and unite communities. We are creating a new era of
+            sports excellence.
           </p>
 
           <p className="mt-4 text-base md:text-lg text-slate-300 font-medium leading-relaxed">
-            In Peakline we believe in the power of sport to transform lives, build character, and unite communities. We are creating a new era of sports excellence.
+            In Peakline we believe in the power of sport to transform lives,
+            build character, and unite communities. We are creating a new era of
+            sports excellence.
           </p>
 
           {/* Stats Bar Container (FIXED: Added horizontal flex wrapper) */}
           <div className="pt-6 flex flex-wrap items-center gap-8 sm:gap-10">
-            
             {/* Stat 1: Photos */}
             <div className="flex items-center gap-4">
               <ImageIcon className="w-10 h-13 text-emerald-500 stroke-[1.5]" />
@@ -83,9 +86,7 @@ export default function Hero() {
                 </span>
               </div>
             </div>
-
           </div>
-
         </div>
       </div>
     </section>

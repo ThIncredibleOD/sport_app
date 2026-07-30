@@ -1,11 +1,9 @@
-
-
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, Play } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight, Play } from "lucide-react";
 
 export default function Hero() {
   return (
@@ -36,12 +34,12 @@ export default function Hero() {
           </h1>
 
           <p className="mt-6 text-base md:text-lg text-slate-300 font-medium max-w-lg leading-relaxed">
-            Pioneering sustainable grassroots sports development and talent management in Nigeria since 2000.
+            Pioneering sustainable grassroots sports development and talent
+            management in Nigeria since 2000.
           </p>
 
           {/* Glass Button Group Container */}
           <div className="mt-10 flex flex-wrap gap-4 items-center">
-            
             {/* Button 1: Green Glass Button */}
             <Link
               href="#leagues"
@@ -52,13 +50,10 @@ export default function Hero() {
             </Link>
 
             {/* Button 2: Frosted Gray Glass Button */}
-            <button
-              className="flex items-center gap-2 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-400/20 backdrop-blur-md text-white font-semibold px-6 py-3.5 rounded-lg shadow-lg transition-all duration-300 hover:-translate-y-0.5 group"
-            >
+            <button className="flex items-center gap-2 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-400/20 backdrop-blur-md text-white font-semibold px-6 py-3.5 rounded-lg shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
               <Play className="w-5 h-5 text-slate-200 fill-slate-200" />
               Watch Our Story
             </button>
-
           </div>
         </div>
       </div>
