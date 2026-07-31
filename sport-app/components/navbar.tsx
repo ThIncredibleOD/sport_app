@@ -11,7 +11,7 @@ interface NavLink {
 }
 // Define the navigation links for the navbar
 const navLinks: NavLink[] = [
-  { label: "Home", href: "/Homepage" },
+  { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "News & Updates", href: "/news" },
   { label: "Photo Gallery", href: "/gallery" },
@@ -44,7 +44,7 @@ export default function Navbar() {
             <ul className="bg-slate-900 absolute top-[calc(100%+10px)] z-100 p-2 rounded-md flex flex-col gap-2">
               <li>
                 <Link
-                  href="/Homepage"
+                  href="/"
                   className="flex items-center gap-2 p-2 whitespace-nowrap hover:bg-slate-500 rounded-sm cursor-pointer"
                 >
                   <House size={20} />
@@ -115,7 +115,7 @@ export default function Navbar() {
         <ul className="hidden md:flex items-center gap-10 font-medium">
           <li>
             <Link
-              href="/Homepage"
+              href="/"
               className="text-green-500 font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 hover:text-yellow-400 transition-colors duration-300"
             >
               Home
