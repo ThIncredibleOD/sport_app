@@ -1,13 +1,12 @@
 "use client";
 
-import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 export default function Why() {
   return (
     <section className="bg-[#0f172a] text-slate-100 p-8 font-sans w-full border-b border-slate-700">
       <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-        
         {/* Left Column: Headings and List */}
         <div className="space-y-6">
           <div className="space-y-1">
@@ -18,7 +17,7 @@ export default function Why() {
               Peakline Sport World?
             </h3>
           </div>
-          
+
           {/* Benefits List */}
           <ul className="space-y-3">
             {[1, 2, 3, 4, 5].map((item) => (
@@ -34,13 +33,14 @@ export default function Why() {
 
         {/* Right Column: Featured Image */}
         <div className="w-full">
-          <img 
-            src="/why1.png" 
-            alt="Player celebrating in stadium" 
-            className="w-full h-64 object-cover rounded-xl shadow-lg"
+          <Image
+            src="/why1.jpg"
+            alt="Player celebrating in stadium"
+            height="800"
+            width="1200"
+            className="w-full h-64 object-cover object-top rounded-xl shadow-lg"
           />
         </div>
-
       </div>
     </section>
   );

@@ -1,4 +1,3 @@
-import React from "react";
 import Hero from "../../d-components/hero";
 import Purpose from "../../d-components/purpose";
 import Story from "../../d-components/story";

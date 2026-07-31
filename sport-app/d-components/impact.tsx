@@ -1,5 +1,4 @@
-import React from 'react';
-import { Calendar, Trophy, Users, Globe } from 'lucide-react';
+import { Calendar, Trophy, Users, Globe } from "lucide-react";
 
 export default function Impact() {
   return (
@@ -7,18 +6,19 @@ export default function Impact() {
       {/* Header Section */}
       <div className="flex items-center justify-center gap-3 mb-10 w-full">
         <div className="h-[1.5px] w-16 bg-green-500"></div>
-        <h2 className="text-[20px] font-bold uppercase tracking-widest text-white">Our Impact So Far</h2>
+        <h2 className="text-[20px] font-bold uppercase tracking-widest text-white">
+          Our Impact So Far
+        </h2>
         <div className="h-[1.5px] w-16 bg-green-500"></div>
       </div>
 
       {/* Grid Container for Cards */}
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-        
         {/* Card 1: Athletes */}
         <div className="relative overflow-hidden border border-slate-800 rounded-2xl aspect-[4/3] shadow-lg group">
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-            style={{ backgroundImage: `url('/pillar2.png')` }}
+            style={{ backgroundImage: `url('/impact1.jpg')` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-900/40" />
 
@@ -30,7 +30,9 @@ export default function Impact() {
               </div>
             </div>
             <div className="text-left space-y-1">
-              <span className="text-2xl font-black text-emerald-600 tracking-tight block">2000+</span>
+              <span className="text-2xl font-black text-emerald-600 tracking-tight block">
+                2000+
+              </span>
               <p className="text-[11px] font-bold text-slate-200 uppercase tracking-wide leading-tight">
                 Athletes Developed
               </p>
@@ -40,9 +42,9 @@ export default function Impact() {
 
         {/* Card 2: Leagues */}
         <div className="relative overflow-hidden border border-slate-800 rounded-2xl aspect-[4/3] shadow-lg group">
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-            style={{ backgroundImage: `url('/story1.png')` }}
+            style={{ backgroundImage: `url('/impact2.jpg')` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-900/40" />
 
@@ -53,7 +55,9 @@ export default function Impact() {
               </div>
             </div>
             <div className="text-left space-y-1">
-              <span className="text-2xl font-black text-emerald-600 tracking-tight block">50+</span>
+              <span className="text-2xl font-black text-emerald-600 tracking-tight block">
+                50+
+              </span>
               <p className="text-[11px] font-bold text-slate-200 uppercase tracking-wide leading-tight">
                 Leagues Organized
               </p>
@@ -63,7 +67,7 @@ export default function Impact() {
 
         {/* Card 3: Communities */}
         <div className="relative overflow-hidden border border-slate-800 rounded-2xl aspect-[4/3] shadow-lg group">
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
             style={{ backgroundImage: `url('/news.png')` }}
           />
@@ -76,7 +80,9 @@ export default function Impact() {
               </div>
             </div>
             <div className="text-left space-y-1">
-              <span className="text-2xl font-black text-emerald-600 tracking-tight block">100+</span>
+              <span className="text-2xl font-black text-emerald-600 tracking-tight block">
+                100+
+              </span>
               <p className="text-[11px] font-bold text-slate-200 uppercase tracking-wide leading-tight">
                 Communities Reached
               </p>
@@ -86,9 +92,9 @@ export default function Impact() {
 
         {/* Card 4: Partners */}
         <div className="relative overflow-hidden border border-slate-800 rounded-2xl aspect-[4/3] shadow-lg group">
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-            style={{ backgroundImage: `url('/why1.png')` }}
+            style={{ backgroundImage: `url('/impact3.png')` }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-900/40" />
 
@@ -99,14 +105,15 @@ export default function Impact() {
               </div>
             </div>
             <div className="text-left space-y-1">
-              <span className="text-2xl font-black text-emerald-600 tracking-tight block">10+</span>
+              <span className="text-2xl font-black text-emerald-600 tracking-tight block">
+                10+
+              </span>
               <p className="text-[11px] font-bold text-slate-200 uppercase tracking-wide leading-tight">
                 Partner Organizations
               </p>
             </div>
           </div>
         </div>
-
       </div>
     </section>
   );

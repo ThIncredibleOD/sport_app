@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Award, BookOpen, ShieldCheck, ArrowRight } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Award, BookOpen, ShieldCheck, ArrowRight } from "lucide-react";
 
 interface PillarCardProps {
   title: string;
@@ -14,11 +14,9 @@ interface PillarCardProps {
 }
 
 // Compact Reusable Card Template
-function PillarCard({ title, description, bgImage, icon, linkHref }: PillarCardProps) {
+function PillarCard({ title, description, bgImage, icon }: PillarCardProps) {
   return (
-   
     <div className="relative group overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80 min-h-[300px] flex flex-col justify-end p-6 transition-all duration-300 hover:border-green-600/40 hover:shadow-lg hover:shadow-green-950/20">
-      
       {/* Background Style Image with Dark Overlay */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -32,7 +30,6 @@ function PillarCard({ title, description, bgImage, icon, linkHref }: PillarCardP
 
       {/* Card Content*/}
       <div className="relative z-10 flex flex-col items-start">
-        
         {/* Shrunk Glowing Green Icon Circle */}
         <div className="relative flex items-center justify-center w-12 h-12 rounded-full border border-green-500 bg-slate-950/90 text-white mb-4 shadow-[0_0_12px_rgba(34,197,94,0.15)]">
           {icon}
@@ -47,16 +44,6 @@ function PillarCard({ title, description, bgImage, icon, linkHref }: PillarCardP
         <p className="text-xs text-slate-300 leading-relaxed mb-4 max-w-[260px]">
           {description}
         </p>
-
-        {/* Yellow "Learn More" Link */}
-        <Link 
-          href={linkHref}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 uppercase tracking-wider transition-colors group/link"
-        >
-          Learn More
-          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
-        </Link>
-
       </div>
     </div>
   );
@@ -65,10 +52,8 @@ function PillarCard({ title, description, bgImage, icon, linkHref }: PillarCardP
 // Main Pillars Section
 export default function Pillars() {
   return (
-    
     <section className="w-full bg-slate-950 py-10 md:py-14 text-white">
       <div className="max-w-[1440px] mx-auto px-6 md:px-16">
-        
         {/* Section Header (Slightly more compact margins) */}
         <div className="text-center mb-10 md:mb-12">
           <span className="text-xs font-bold tracking-[0.25em] text-green-500 uppercase block mb-2">
@@ -81,36 +66,32 @@ export default function Pillars() {
 
         {/* Grid of 3 Pillar Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
           {/* Card 1 */}
           <PillarCard
             title="Youth Leagues & Championships"
             description="Structured age-grade leagues and tournaments that promote competition, discipline and teamwork."
-            bgImage="/pillars.png"
+            bgImage="/pillars.jpg"
             icon={<Award className="w-5.5 h-5.5 text-white stroke-[1.5]" />}
-            linkHref="#leagues"
           />
 
           {/* Card 2 */}
           <PillarCard
             title="Capacity Building & Education"
-            description="Structured age-grade leagues and tournaments that promote competition, discipline and teamwork."
-            bgImage="/pillar2.png"
+            description="Providing coaching education, referee training, and development programs that strengthen skills, leadership, and excellence in football."
+            bgImage="/pillars2.jpg"
             icon={<BookOpen className="w-5.5 h-5.5 text-white stroke-[1.5]" />}
-            linkHref="#education"
           />
 
           {/* Card 3 */}
           <PillarCard
             title="Player Management & Welfare"
-            description="Structured age-grade leagues and tournaments that promote competition, discipline and teamwork."
-            bgImage="/pillar3.png"
-            icon={<ShieldCheck className="w-5.5 h-5.5 text-white stroke-[1.5]" />}
-            linkHref="#welfare"
+            description="Supporting players through career development, welfare initiatives, health programs, and opportunities that promote success on and off the pitch."
+            bgImage="/pillars3.jpg"
+            icon={
+              <ShieldCheck className="w-5.5 h-5.5 text-white stroke-[1.5]" />
+            }
           />
-
         </div>
-
       </div>
     </section>
   );
