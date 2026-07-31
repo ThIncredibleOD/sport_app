@@ -1,7 +1,15 @@
 "use client";
 
-import React from 'react';
-import {Newspaper,CheckCircle2,Trophy,Star,Handshake,Calendar,Bell,ArrowRight,} from 'lucide-react';
+import {
+  Newspaper,
+  CheckCircle2,
+  Trophy,
+  Star,
+  Handshake,
+  Calendar,
+  Bell,
+  ArrowRight,
+} from "lucide-react";
 
 export default function Updates() {
   return (
@@ -56,8 +64,12 @@ export default function Updates() {
 
         {/* Newsletter Section */}
         <div className="border-t border-slate-800 pt-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-100">STAY CONNECTED</h3>
-          <p className="mt-1 text-[11px] text-slate-400">Subscribe to get the latest updates and news.</p>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-100">
+            STAY CONNECTED
+          </h3>
+          <p className="mt-1 text-[11px] text-slate-400">
+            Subscribe to get the latest updates and news.
+          </p>
           <form className="mt-3 space-y-2" onSubmit={(e) => e.preventDefault()}>
             <input
               type="email"
@@ -93,16 +105,27 @@ export default function Updates() {
           {/* Card 1 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img src="/news.png" alt="News" className="h-full w-full object-cover" />
+              <img
+                src="/news1.jpg"
+                alt="News"
+                className="h-full w-full object-cover"
+              />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 TOURNAMENTS
               </span>
             </div>
             <div className="p-3.5">
-              <h2 className="text-sm font-bold leading-snug">Peakline U-13 League Finale Concludes in Style</h2>
+              <h2 className="text-sm font-bold leading-snug">
+                Peakline U-13 League Finale Concludes in Style
+              </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
-              <p className="mt-1 text-xs text-slate-300">Exciting matchups and great talent on display.</p>
-              <a href="#" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline">
+              <p className="mt-1 text-xs text-slate-300">
+                Exciting matchups and great talent on display.
+              </p>
+              <a
+                href="#"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
+              >
                 <span>Read More</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
@@ -112,16 +135,27 @@ export default function Updates() {
           {/* Card 2 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img src="/pillar2.png" alt="News" className="h-full w-full object-cover" />
+              <img
+                src="/news2.jpg"
+                alt="News"
+                className="h-full w-full object-cover"
+              />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 UPDATES
               </span>
             </div>
             <div className="p-3.5">
-              <h2 className="text-sm font-bold leading-snug">Peakline U-13 League Finale Concludes in Style</h2>
+              <h2 className="text-sm font-bold leading-snug">
+                Peakline U-13 League Finale Concludes in Style
+              </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
-              <p className="mt-1 text-xs text-slate-300">Exciting matchups and great talent on display.</p>
-              <a href="#" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline">
+              <p className="mt-1 text-xs text-slate-300">
+                Exciting matchups and great talent on display.
+              </p>
+              <a
+                href="#"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
+              >
                 <span>Read More</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
@@ -131,16 +165,27 @@ export default function Updates() {
           {/* Card 3 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img src="/pillar2.png" alt="News" className="h-full w-full object-cover" />
+              <img
+                src="/pillar2.png"
+                alt="News"
+                className="h-full w-full object-cover"
+              />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 EVENTS
               </span>
             </div>
             <div className="p-3.5">
-              <h2 className="text-sm font-bold leading-snug">Peakline U-13 League Finale Concludes in Style</h2>
+              <h2 className="text-sm font-bold leading-snug">
+                Peakline U-13 League Finale Concludes in Style
+              </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
-              <p className="mt-1 text-xs text-slate-300">Exciting matchups and great talent on display.</p>
-              <a href="#" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline">
+              <p className="mt-1 text-xs text-slate-300">
+                Exciting matchups and great talent on display.
+              </p>
+              <a
+                href="#"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
+              >
                 <span>Read More</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
@@ -150,16 +195,27 @@ export default function Updates() {
           {/* Card 4 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img src="/news2.png" alt="News" className="h-full w-full object-cover" />
+              <img
+                src="/news2.png"
+                alt="News"
+                className="h-full w-full object-cover"
+              />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 PARTNERSHIPS
               </span>
             </div>
             <div className="p-3.5">
-              <h2 className="text-sm font-bold leading-snug">Peakline Joins FreeStack for Athletes</h2>
+              <h2 className="text-sm font-bold leading-snug">
+                Peakline Joins FreeStack for Athletes
+              </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
-              <p className="mt-1 text-xs text-slate-300">Exciting matchups and great talent on display.</p>
-              <a href="#" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline">
+              <p className="mt-1 text-xs text-slate-300">
+                Exciting matchups and great talent on display.
+              </p>
+              <a
+                href="#"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
+              >
                 <span>Read More</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
@@ -169,16 +225,27 @@ export default function Updates() {
           {/* Card 5 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img src="/news3.png" alt="News" className="h-full w-full object-cover" />
+              <img
+                src="/news3.png"
+                alt="News"
+                className="h-full w-full object-cover"
+              />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 ATHLETE SPOTLIGHT
               </span>
             </div>
             <div className="p-3.5">
-              <h2 className="text-sm font-bold leading-snug">Daniel Okoro: Rising Midfield Talent</h2>
+              <h2 className="text-sm font-bold leading-snug">
+                Daniel Okoro: Rising Midfield Talent
+              </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
-              <p className="mt-1 text-xs text-slate-300">Exciting matchups and great talent on display.</p>
-              <a href="#" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline">
+              <p className="mt-1 text-xs text-slate-300">
+                Exciting matchups and great talent on display.
+              </p>
+              <a
+                href="#"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
+              >
                 <span>Read More</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
@@ -188,16 +255,27 @@ export default function Updates() {
           {/* Card 6 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img src="/news4.png" alt="News" className="h-full w-full object-cover" />
+              <img
+                src="/news4.png"
+                alt="News"
+                className="h-full w-full object-cover"
+              />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 ANNOUNCEMENTS
               </span>
             </div>
             <div className="p-3.5">
-              <h2 className="text-sm font-bold leading-snug">New Training Facility Comings Soon!</h2>
+              <h2 className="text-sm font-bold leading-snug">
+                New Training Facility Comings Soon!
+              </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
-              <p className="mt-1 text-xs text-slate-300">Exciting matchups and great talent on display.</p>
-              <a href="#" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline">
+              <p className="mt-1 text-xs text-slate-300">
+                Exciting matchups and great talent on display.
+              </p>
+              <a
+                href="#"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
+              >
                 <span>Read More</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
@@ -217,11 +295,17 @@ export default function Updates() {
       {/* Right Sidebar */}
       <aside className="hidden xl:flex w-72 flex-col gap-5 border-l border-slate-800 p-4">
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider">TRENDING NEWS</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wider">
+            TRENDING NEWS
+          </h2>
           <div className="mt-3 space-y-3">
             {/* Trending Item 1 */}
             <div className="flex gap-2.5">
-              <img src="/news5.png" alt="Trending" className="h-12 w-16 rounded object-cover" />
+              <img
+                src="/news5.png"
+                alt="Trending"
+                className="h-12 w-16 rounded object-cover"
+              />
               <div>
                 <h3 className="text-[11px] font-semibold leading-snug cursor-pointer hover:text-[#16a34a]">
                   Peakline U-17 Team Wins Gold in International Cup
@@ -232,7 +316,11 @@ export default function Updates() {
 
             {/* Trending Item 2 */}
             <div className="flex gap-2.5">
-              <img src="/news6.png" alt="Trending" className="h-12 w-16 rounded object-cover" />
+              <img
+                src="/news6.png"
+                alt="Trending"
+                className="h-12 w-16 rounded object-cover"
+              />
               <div>
                 <h3 className="text-[11px] font-semibold leading-snug cursor-pointer hover:text-[#16a34a]">
                   5 Training Tips Every Young Athlete Should Know
@@ -243,7 +331,11 @@ export default function Updates() {
 
             {/* Trending Item 3 */}
             <div className="flex gap-2.5">
-              <img src="/news7.png" alt="Trending" className="h-12 w-16 rounded object-cover" />
+              <img
+                src="/news7.png"
+                alt="Trending"
+                className="h-12 w-16 rounded object-cover"
+              />
               <div>
                 <h3 className="text-[11px] font-semibold leading-snug cursor-pointer hover:text-[#16a34a]">
                   Behind the scenes of Our Scouting Program
@@ -254,7 +346,11 @@ export default function Updates() {
 
             {/* Trending Item 4 */}
             <div className="flex gap-2.5">
-              <img src="/news8.png" alt="Trending" className="h-12 w-16 rounded object-cover" />
+              <img
+                src="/news8.png"
+                alt="Trending"
+                className="h-12 w-16 rounded object-cover"
+              />
               <div>
                 <h3 className="text-[11px] font-semibold leading-snug cursor-pointer hover:text-[#16a34a]">
                   Peakline Joins Global Sports Alliance
@@ -267,8 +363,7 @@ export default function Updates() {
 
         {/* Banner Ad Section */}
         <div className="relative min-h-[240px] flex-1 overflow-hidden rounded-lg bg-gradient-to-b from-emerald-900 to-black p-4 flex flex-col justify-between">
-         
-           <img src="/news1.png" alt="ad banner" />
+          <img src="/news1.png" alt="ad banner" />
         </div>
       </aside>
     </div>

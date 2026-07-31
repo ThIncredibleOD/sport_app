@@ -1,4 +1,3 @@
-import React from "react";
 import Hero from "../../e-components/hero";
 import Updates from "../../e-components/updates";
 import Spons from "../../components/spons";
