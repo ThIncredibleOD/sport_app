@@ -1,9 +1,8 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 interface EventCardProps {
   title: string;
@@ -14,10 +13,15 @@ interface EventCardProps {
 }
 
 // Compact Reusable Individual Card Component
-function EventCard({ title, date, description, imageSrc, linkHref }: EventCardProps) {
+function EventCard({
+  title,
+  date,
+  description,
+  imageSrc,
+  linkHref,
+}: EventCardProps) {
   return (
     <div className="group flex flex-col bg-[#0f1d30] border border-slate-800 rounded-xl overflow-hidden transition-all duration-300 hover:border-slate-700 hover:-translate-y-1 hover:shadow-lg">
-
       <div className="relative w-full h-[120px] sm:h-[140px] overflow-hidden">
         <Image
           src={imageSrc}
@@ -45,15 +49,14 @@ function EventCard({ title, date, description, imageSrc, linkHref }: EventCardPr
         </p>
 
         {/* Read More Link */}
-        <Link 
-          href={linkHref} 
+        <Link
+          href={linkHref}
           className="mt-auto inline-flex items-center gap-1 text-xs font-semibold text-green-500 hover:text-green-400 transition-colors group/link"
         >
           Read More
           <ArrowRight className="w-3 h-3 transition-transform duration-300 group-hover/link:translate-x-1" />
         </Link>
       </div>
-
     </div>
   );
 }
@@ -63,19 +66,17 @@ export default function Events() {
   return (
     <section className="w-full bg-[#0b1727] py-8 md:py-10 text-white">
       <div className="max-w-[1440px] mx-auto px-6 md:px-16">
-        
         {/* Section Heading */}
         <div className="text-center mb-6 md:mb-8">
           <h2 className="text-base md:text-lg font-extrabold tracking-[0.15em] uppercase text-white">
             Latest News & Upcoming Events
           </h2>
         </div>
-           
-           {/* Grid Layout for Event Cards */}
+
+        {/* Grid Layout for Event Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 md:mb-10">
-          
           {/* Card 1 */}
-          <EventCard 
+          <EventCard
             title="Peakline U-13 League Finale Concludes in Style"
             date="May 28 2026"
             description="Exciting matchups and great talent on display."
@@ -84,7 +85,7 @@ export default function Events() {
           />
 
           {/* Card 2 */}
-          <EventCard 
+          <EventCard
             title="Peakline U-13 League Finale Concludes in Style"
             date="May 28 2026"
             description="Exciting matchups and great talent on display."
@@ -93,7 +94,7 @@ export default function Events() {
           />
 
           {/* Card 3 */}
-          <EventCard 
+          <EventCard
             title="Peakline U-13 League Finale Concludes in Style"
             date="May 28 2026"
             description="Exciting matchups and great talent on display."
@@ -102,14 +103,13 @@ export default function Events() {
           />
 
           {/* Card 4 */}
-          <EventCard 
+          <EventCard
             title="Peakline U-13 League Finale Concludes in Style"
             date="May 28 2026"
             description="Exciting matchups and great talent on display."
             imageSrc="/pillar3.png"
             linkHref="#event-4"
           />
-
         </div>
 
         {/* Compact Bottom Centered "View All" Button */}
@@ -122,7 +122,6 @@ export default function Events() {
             <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>
-
       </div>
     </section>
   );

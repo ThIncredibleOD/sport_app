@@ -2,15 +2,13 @@
 
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Award, BookOpen, ShieldCheck, ArrowRight } from "lucide-react";
+import { Award, BookOpen, ShieldCheck } from "lucide-react";
 
 interface PillarCardProps {
   title: string;
   description: string;
   bgImage: string;
   icon: React.ReactNode;
-  linkHref: string;
 }
 
 // Compact Reusable Card Template

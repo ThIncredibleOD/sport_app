@@ -1,13 +1,11 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
+import Image from "next/image";
 
 export default function Partners() {
   return (
     <section className="w-full bg-white py-8 md:py-12 border-t border-b border-slate-100">
       <div className="max-w-[1440px] mx-auto px-6 md:px-16">
-        
         {/* Title Block */}
         <div className="text-center mb-6 md:mb-8">
           <h2 className="text-sm md:text-base font-extrabold tracking-[0.15em] text-slate-900 uppercase">
@@ -17,7 +15,6 @@ export default function Partners() {
 
         {/* Logo Grid */}
         <div className="flex flex-wrap items-center justify-between gap-12 md:gap-20 lg:gap-28 w-full">
-          
           {/* Logo 1 */}
           <div className="relative w-[190px] h-[70px] md:w-[230px] md:h-[85px] transition-all duration-300">
             <Image
@@ -47,9 +44,7 @@ export default function Partners() {
               className="object-contain"
             />
           </div>
-
         </div>
-
       </div>
     </section>
   );
