@@ -98,7 +98,7 @@ export default function Events() {
             title="Peakline U-13 League Finale Concludes in Style"
             date="May 28 2026"
             description="Exciting matchups and great talent on display."
-            imageSrc="/pillars.png"
+            imageSrc="/pillar.png"
             linkHref="#event-3"
           />
 
