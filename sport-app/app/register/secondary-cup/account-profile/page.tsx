@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Plus } from 'lucide-react';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 
 export default function AccountProfile() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    name: '',
-    contactNumber: '',
-    emailAddress: '',
-    academyName: '',
+    name: "",
+    contactNumber: "",
+    emailAddress: "",
+    academyName: "",
   });
 
   // State for Passport Upload & Preview
@@ -37,13 +37,13 @@ export default function AccountProfile() {
     console.log("Submitted Profile Data:", formData, passportPreview);
 
     // Navigate to next step
-    router.push('/registration-u');
+    router.push("/register/secondary-cup/academy-squad");
   };
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
         style={{ backgroundImage: `url('/hero.png')` }}
       />
@@ -52,10 +52,9 @@ export default function AccountProfile() {
 
       {/* Modal Card */}
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
-        
         {/* Back Link */}
-        <a 
-          href="/get-started" 
+        <a
+          href="/get-started"
           className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors duration-150 mb-4"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -65,9 +64,9 @@ export default function AccountProfile() {
         {/* Header / Logo Section */}
         <div className="flex flex-col items-center text-center">
           <div className="mb-4 flex justify-center">
-            <img 
-              src="/under1.png" 
-              alt="The Nathaniel Idowu Under 16 Football League" 
+            <img
+              src="/secondary.png"
+              alt="The Nathaniel Idowu Secondary Football League"
               className="h-20 w-auto object-contain"
             />
           </div>
@@ -75,30 +74,30 @@ export default function AccountProfile() {
             Account Profile
           </h1>
           <p className="mt-1 text-xs text-slate-400 max-w-xs leading-relaxed">
-            Please ensure all academy details match your official registration documents.
+            Please ensure all academy details match your official registration
+            documents.
           </p>
         </div>
 
         {/* Registration Form */}
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          
           {/* Upload logo  */}
           <div className="flex flex-col items-center justify-center gap-2 py-1">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
               {passportPreview ? (
-                <img 
-                  src={passportPreview} 
-                  alt="Passport Preview" 
-                  className="w-full h-full object-cover" 
+                <img
+                  src={passportPreview}
+                  alt="Passport Preview"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <Plus className="h-6 w-6 text-slate-300 group-hover:text-white transition-colors" />
               )}
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handlePassportChange} 
-                className="hidden" 
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePassportChange}
+                className="hidden"
               />
             </label>
             <span className="text-xs text-slate-300">Upload Team Logo</span>
@@ -106,7 +105,10 @@ export default function AccountProfile() {
 
           {/* Name Field */}
           <div>
-            <label htmlFor="name" className="block text-xs font-medium text-slate-200 mb-1">
+            <label
+              htmlFor="name"
+              className="block text-xs font-medium text-slate-200 mb-1"
+            >
               Name
             </label>
             <input
@@ -122,7 +124,10 @@ export default function AccountProfile() {
 
           {/* Contact Number Field */}
           <div>
-            <label htmlFor="contactNumber" className="block text-xs font-medium text-slate-200 mb-1">
+            <label
+              htmlFor="contactNumber"
+              className="block text-xs font-medium text-slate-200 mb-1"
+            >
               Contact Number
             </label>
             <input
@@ -138,7 +143,10 @@ export default function AccountProfile() {
 
           {/* Email Address Field */}
           <div>
-            <label htmlFor="emailAddress" className="block text-xs font-medium text-slate-200 mb-1">
+            <label
+              htmlFor="emailAddress"
+              className="block text-xs font-medium text-slate-200 mb-1"
+            >
               Email Address
             </label>
             <input
@@ -154,7 +162,10 @@ export default function AccountProfile() {
 
           {/* Academy Name Field */}
           <div>
-            <label htmlFor="academyName" className="block text-xs font-medium text-slate-200 mb-1">
+            <label
+              htmlFor="academyName"
+              className="block text-xs font-medium text-slate-200 mb-1"
+            >
               Academy Name
             </label>
             <input
@@ -178,7 +189,6 @@ export default function AccountProfile() {
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
-
         </form>
       </div>
     </div>

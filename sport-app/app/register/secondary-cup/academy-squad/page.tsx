@@ -1,24 +1,23 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Plus, Upload } from 'lucide-react';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, Plus, Upload } from "lucide-react";
 
 export default function AcademySquadRegistration() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    headCoachFullName: '',
-    dateOfBirth: '',
-    nationality: '',
-    
+    headCoachFullName: "",
+    dateOfBirth: "",
+    nationality: "",
   });
 
   const [passportImage, setPassportImage] = useState<File | null>(null);
   const [passportPreview, setPassportPreview] = useState<string | null>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setFormData({
       ...formData,
@@ -38,16 +37,19 @@ export default function AcademySquadRegistration() {
     e.preventDefault();
 
     // Log or handle squad data locally
-    console.log('Submitted Squad Registration:', { ...formData, passportImage });
+    console.log("Submitted Squad Registration:", {
+      ...formData,
+      passportImage,
+    });
 
-    // Navigate to the next step 
-    router.push('/playereg-u');
+    // Navigate to the next step
+    router.push("/register/secondary-cup/players");
   };
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
         style={{ backgroundImage: `url('/hero.png')` }}
       />
@@ -56,11 +58,10 @@ export default function AcademySquadRegistration() {
 
       {/* Glass Modal Card */}
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none overflow-hidden">
-        
         {/* Back Link to Previous Page */}
-        <button 
+        <button
           type="button"
-          onClick={() => router.push('/register-u')}
+          onClick={() => router.push("/secondary-register")}
           className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors duration-150 mb-4 relative z-10"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -71,9 +72,9 @@ export default function AcademySquadRegistration() {
         <div className="flex flex-col items-center text-center relative z-10">
           {/* League Logo */}
           <div className="mb-4 flex justify-center">
-            <img 
-              src="/under1.png" 
-              alt="The Nathaniel Idowu Under 16 Football League" 
+            <img
+              src="/secondary.png"
+              alt="The Nathaniel Idowu secondary Football League"
               className="h-28 w-auto object-contain drop-shadow-md"
             />
           </div>
@@ -82,42 +83,46 @@ export default function AcademySquadRegistration() {
             Academy Squad Registration
           </h1>
           <p className="mt-1.5 text-xs text-slate-300 max-w-xs leading-relaxed">
-            Enter the details for each player/ head coach and upload their required documents. You must register a minimum of 18 players and an head coach.
+            Enter the details for each player/ head coach and upload their
+            required documents. You must register a minimum of 18 players and an
+            head coach.
           </p>
         </div>
 
         {/* Registration Form */}
         <form className="mt-6 space-y-4 relative z-10" onSubmit={handleSubmit}>
-          
           {/* Upload Passport Section */}
           <div className="flex flex-col items-center justify-center gap-2 py-2">
-  <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 backdrop-blur-sm cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
-    {passportPreview ? (
-      <img 
-        src={passportPreview} 
-        alt="Passport Preview" 
-        className="w-full h-full object-cover" 
-      />
-    ) : (
-      <div className="flex flex-col items-center justify-center text-slate-300 group-hover:text-white">
-        <Plus className="h-6 w-6 stroke-[1.5]" />
-      </div>
-    )}
-    <input 
-      type="file" 
-      accept="image/*" 
-      onChange={handleImageChange} 
-      className="hidden" 
-    />
-  </label>
+            <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 backdrop-blur-sm cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
+              {passportPreview ? (
+                <img
+                  src={passportPreview}
+                  alt="Passport Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-300 group-hover:text-white">
+                  <Plus className="h-6 w-6 stroke-[1.5]" />
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
 
-  <span className="text-xs font-medium text-slate-300 text-center">
-    Upload Passport
-  </span>
-</div>
+            <span className="text-xs font-medium text-slate-300 text-center">
+              Upload Passport
+            </span>
+          </div>
           {/* Head Coach Full Name */}
           <div>
-            <label htmlFor="headCoachFullName" className="block text-xs font-medium text-slate-200 mb-1">
+            <label
+              htmlFor="headCoachFullName"
+              className="block text-xs font-medium text-slate-200 mb-1"
+            >
               Head Coach Full Name
             </label>
             <input
@@ -133,7 +138,10 @@ export default function AcademySquadRegistration() {
 
           {/* Date Of Birth */}
           <div>
-            <label htmlFor="dateOfBirth" className="block text-xs font-medium text-slate-200 mb-1">
+            <label
+              htmlFor="dateOfBirth"
+              className="block text-xs font-medium text-slate-200 mb-1"
+            >
               Date Of Birth
             </label>
             <input
@@ -149,7 +157,10 @@ export default function AcademySquadRegistration() {
 
           {/* Nationality */}
           <div>
-            <label htmlFor="nationality" className="block text-xs font-medium text-slate-200 mb-1">
+            <label
+              htmlFor="nationality"
+              className="block text-xs font-medium text-slate-200 mb-1"
+            >
               Nationality
             </label>
             <input
@@ -163,7 +174,6 @@ export default function AcademySquadRegistration() {
             />
           </div>
 
-         
           {/* Continue Action Button */}
           <div className="pt-2">
             <button

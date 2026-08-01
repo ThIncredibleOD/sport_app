@@ -1,41 +1,26 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {  ArrowLeft,  ChevronLeft,  ChevronRight,  X,  Plus,  Upload,  AlertTriangle,  RotateCcw } from 'lucide-react';
-
-interface Player {
-  playerFullName: string;
-  dateOfBirth: string;
-  StateOfOrigin: string;
-  nationality: string;
-  jerseyNumber: string;
-  position: string;
-  passportPreview: string | null;
-  consentForm: File | null;
-  proofOfAge: File | null;
-}
-
-const createEmptyPlayer = (): Player => ({
-  playerFullName: '',
-  dateOfBirth: '',
-  StateOfOrigin: '',
-  nationality: '',
-  jerseyNumber: '',
-  position: '',
-  passportPreview: null,
-  consentForm: null,
-  proofOfAge: null,
-});
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Plus,
+  Upload,
+  AlertTriangle,
+  RotateCcw,
+} from "lucide-react";
+import { useRegister } from "@/context/sportContext";
+import { createEmptyPlayer } from "../layout";
+import Image from "next/image";
+import { submitRegistration } from "@/lib/api/registration";
 
 export default function PlayerRegistration() {
+  const { academyProfile, headCoach, players, setPlayers } = useRegister();
   const router = useRouter();
 
-  // Array of 18 player objects
-  const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 18 }, () => createEmptyPlayer())
-  );
-  
   // Track active player index (0 to 17)
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const currentPlayer = players[currentIndex];
@@ -56,7 +41,9 @@ export default function PlayerRegistration() {
     });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setPlayers((prev) => {
       const updated = [...prev];
@@ -71,7 +58,10 @@ export default function PlayerRegistration() {
       const previewUrl = URL.createObjectURL(file);
       setPlayers((prev) => {
         const updated = [...prev];
-        updated[currentIndex] = { ...updated[currentIndex], passportPreview: previewUrl };
+        updated[currentIndex] = {
+          ...updated[currentIndex],
+          passportPreview: previewUrl,
+        };
         return updated;
       });
     }
@@ -79,7 +69,7 @@ export default function PlayerRegistration() {
 
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: 'consentForm' | 'proofOfAge'
+    field: "consentForm" | "proofOfAge",
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -91,41 +81,70 @@ export default function PlayerRegistration() {
     }
   };
 
-  const handleAddPlayerSubmit = (e: React.FormEvent) => {
+  const handleAddPlayerSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentIndex < 17) {
+    if (currentIndex < 4) {
       setCurrentIndex((prev) => prev + 1);
     }
   };
 
-  const handleNextSection = () => {
-    console.log("All 18 players registered:", players);
-    router.push('/complete-u'); 
+  const handleSubmissionSupabase = async () => {
+    const submission = await submitRegistration({
+      tournament_slug: "u16-league",
+      contact_name: academyProfile.name,
+      contact_phone: academyProfile.contactNumber,
+      contact_email: academyProfile.email,
+      academy_name: academyProfile.academyName,
+
+      coach_full_name: headCoach.fullName,
+      coach_dob: headCoach.dateOfBirth,
+      coach_nationality: headCoach.nationality,
+      team_logo: academyProfile.logo,
+
+      players: players.map((player) => ({
+        full_name: player.fullName,
+        dob: player.dateOfBirth,
+        nationality: player.nationality,
+        position: player.position,
+        consent_form: player.consentForm,
+        proof_of_age: player.proofOfAge,
+      })),
+    });
+
+    return submission;
+  };
+
+  const handleNextSection = async () => {
+    // console.log("All 18 players registered:", players);
+    // router.push("/complete-u");
+
+    const data = await handleSubmissionSupabase();
+
+    console.log(data);
   };
 
   const handleBottomBack = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
     } else {
-      router.push('/registration-u');
+      router.push("/register/league/academy-squad");
     }
   };
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
         style={{ backgroundImage: `url('/hero.png')` }}
       />
       <div className="absolute inset-0 bg-slate-950/50" />
 
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
-        
         {/* Top Back Link */}
         <div className="w-full flex justify-start relative z-10 mb-2">
-          <button 
+          <button
             type="button"
-            onClick={() => router.push('/registration-u')}
+            onClick={() => router.push("/register/league/academy-squad")}
             className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -135,10 +154,12 @@ export default function PlayerRegistration() {
 
         {/* Logo Banner & Number Indicator */}
         <div className="flex flex-col items-center relative z-10">
-          <img 
-            src="/under1.png" 
-            alt="The Nathaniel Idowu Under 16 Football League" 
-            className="h-20 w-auto object-contain mb-1"
+          <Image
+            src="/under1.png"
+            height="800"
+            width="1200"
+            alt="The Nathaniel Idowu Under 16 Football League"
+            className="h-20 w-auto object-contain"
           />
 
           {/* PLAYER PAGE NUMBER BADGE (1-18) */}
@@ -150,30 +171,34 @@ export default function PlayerRegistration() {
         {/* Top Navigation Controls */}
         <div className="flex items-center justify-between w-full relative z-10 my-3 px-1">
           <div className="flex items-center gap-2">
-            <button 
+            <button
               type="button"
               onClick={handlePrevPlayer}
               disabled={currentIndex === 0}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 bg-slate-950/40 text-slate-300 transition-all ${
-                currentIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-950/70 hover:text-white'
+                currentIndex === 0
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-slate-950/70 hover:text-white"
               }`}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
 
-            <button 
+            <button
               type="button"
               onClick={handleNextPlayer}
               disabled={currentIndex === 17}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 bg-slate-950/40 text-slate-300 transition-all ${
-                currentIndex === 17 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-950/70 hover:text-white'
+                currentIndex === 17
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-slate-950/70 hover:text-white"
               }`}
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          <button 
+          <button
             type="button"
             onClick={handleClearPlayer}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/40 bg-red-950/30 text-red-400 hover:bg-red-900/50 transition-all"
@@ -184,28 +209,43 @@ export default function PlayerRegistration() {
         </div>
 
         {/* Form Fields */}
-        <form className="mt-4 space-y-3.5 relative z-10" onSubmit={handleAddPlayerSubmit}>
-          
+        <form
+          className="mt-4 space-y-3.5 relative z-10"
+          onSubmit={handleAddPlayerSubmit}
+        >
           {/* Passport Upload */}
           <div className="flex flex-col items-center justify-center gap-2 py-1">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] transition-all overflow-hidden group">
               {currentPlayer.passportPreview ? (
-                <img src={currentPlayer.passportPreview} alt="Passport Preview" className="w-full h-full object-cover" />
+                <Image
+                  src={currentPlayer.passportPreview}
+                  height="800"
+                  width="1600"
+                  alt="Logo Preview"
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <Plus className="h-6 w-6 text-slate-300 group-hover:text-white" />
               )}
-              <input type="file" accept="image/*" onChange={handlePassportChange} className="hidden" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePassportChange}
+                className="hidden"
+              />
             </label>
             <span className="text-xs text-slate-300">Upload Passport</span>
           </div>
 
           {/* Player Full Name */}
           <div>
-            <label className="block text-xs font-medium text-slate-200 mb-1">Player Full Name</label>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Player Full Name
+            </label>
             <input
               type="text"
-              name="playerFullName"
-              value={currentPlayer.playerFullName}
+              name="fullName"
+              value={currentPlayer.fullName}
               onChange={handleChange}
               placeholder="e.g. John Doe"
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none transition-all"
@@ -214,7 +254,9 @@ export default function PlayerRegistration() {
 
           {/* Date Of Birth */}
           <div>
-            <label className="block text-xs font-medium text-slate-200 mb-1">Date Of Birth</label>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Date Of Birth
+            </label>
             <input
               type="date"
               name="dateOfBirth"
@@ -226,10 +268,12 @@ export default function PlayerRegistration() {
 
           {/* Nationality */}
           <div>
-            <label className="block text-xs font-medium text-slate-200 mb-1">Nationality</label>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Nationality
+            </label>
             <input
               type="text"
-              name="Nationality"
+              name="nationality"
               value={currentPlayer.nationality}
               onChange={handleChange}
               placeholder="e.g. Nigerian"
@@ -239,14 +283,18 @@ export default function PlayerRegistration() {
 
           {/*  Jersey No. (1 - 99) */}
           <div>
-            <label className="block text-xs font-medium text-slate-200 mb-1">Jersey No.</label>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Jersey No.
+            </label>
             <select
               name="jerseyNumber"
               value={currentPlayer.jerseyNumber}
               onChange={handleChange}
               className="w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-xs text-slate-200 focus:border-[#16a34a] focus:outline-none transition-all"
             >
-              <option value="" disabled>Select Jersey Number</option>
+              <option value="" disabled>
+                Select Jersey Number
+              </option>
               {Array.from({ length: 99 }, (_, i) => i + 1).map((num) => (
                 <option key={num} value={num}>
                   {num}
@@ -257,14 +305,18 @@ export default function PlayerRegistration() {
 
           {/* Position Selection */}
           <div>
-            <label className="block text-xs font-medium text-slate-200 mb-1">Position</label>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Position
+            </label>
             <select
               name="position"
               value={currentPlayer.position}
               onChange={handleChange}
               className="w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-xs text-slate-200 focus:border-[#16a34a] focus:outline-none transition-all"
             >
-              <option value="" disabled>Select Player Position</option>
+              <option value="" disabled>
+                Select Player Position
+              </option>
               <option value="Goalkeeper">Goalkeeper</option>
               <option value="Defender">Defender</option>
               <option value="Midfielder">Midfielder</option>
@@ -282,14 +334,32 @@ export default function PlayerRegistration() {
           <div className="space-y-2 pt-1">
             <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
               <Upload className="h-3.5 w-3.5" />
-              <span>{currentPlayer.consentForm ? currentPlayer.consentForm.name : "Upload Consent Form"}</span>
-              <input type="file" accept=".pdf,image/*" onChange={(e) => handleFileUpload(e, 'consentForm')} className="hidden" />
+              <span>
+                {currentPlayer.consentForm
+                  ? currentPlayer.consentForm.name
+                  : "Upload Consent Form"}
+              </span>
+              <input
+                type="file"
+                accept=".pdf,image/*"
+                onChange={(e) => handleFileUpload(e, "consentForm")}
+                className="hidden"
+              />
             </label>
 
             <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
               <Upload className="h-3.5 w-3.5" />
-              <span>{currentPlayer.proofOfAge ? currentPlayer.proofOfAge.name : "Upload Proof Of Age"}</span>
-              <input type="file" accept=".pdf,image/*" onChange={(e) => handleFileUpload(e, 'proofOfAge')} className="hidden" />
+              <span>
+                {currentPlayer.proofOfAge
+                  ? currentPlayer.proofOfAge.name
+                  : "Upload Proof Of Age"}
+              </span>
+              <input
+                type="file"
+                accept=".pdf,image/*"
+                onChange={(e) => handleFileUpload(e, "proofOfAge")}
+                className="hidden"
+              />
             </label>
           </div>
 
@@ -297,10 +367,10 @@ export default function PlayerRegistration() {
           <div className="pt-3 space-y-2">
             <button
               type={currentIndex === 17 ? "button" : "submit"}
-              onClick={currentIndex === 17 ? handleNextSection : undefined}
+              onClick={currentIndex === 4 ? handleNextSection : undefined}
               className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2.5 px-4 text-xs font-semibold text-white hover:bg-[#15803d] transition-all shadow-lg shadow-emerald-950/50"
             >
-              {currentIndex === 17 ? (
+              {currentIndex === 4 ? (
                 <ChevronRight className="h-4 w-4" />
               ) : (
                 <Plus className="h-3.5 w-3.5" />
@@ -317,7 +387,6 @@ export default function PlayerRegistration() {
               <span>Back</span>
             </button>
           </div>
-
         </form>
       </div>
     </div>
