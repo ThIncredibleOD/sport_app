@@ -1,45 +1,45 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import Image from "next/image";
+import { useRegister } from "@/context/sportContext";
 
 export default function AccountProfile() {
+  const { academyProfile, setAcademyProfile } = useRegister();
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    contactNumber: "",
-    emailAddress: "",
-    academyName: "",
-  });
-
   // State for Passport Upload & Preview
-  const [passportPreview, setPassportPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  // Passport Image Handler
-  const handlePassportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Logo Image Handler
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPassportPreview(URL.createObjectURL(file));
+      setAcademyProfile((prev) => ({ ...prev, logo: file }));
+      setLogoPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Submitted Profile Data:", formData, passportPreview);
+    console.log("Submitted Profile Data:", academyProfile, logoPreview);
 
     // Navigate to next step
     router.push("/register/league/academy-squad");
   };
+
+  useEffect(() => {
+    if (!academyProfile.logo) return;
+
+    const url = URL.createObjectURL(academyProfile.logo);
+    setLogoPreview(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [academyProfile.logo]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden">
@@ -88,9 +88,9 @@ export default function AccountProfile() {
           {/* Upload logo  */}
           <div className="flex flex-col items-center justify-center gap-2 py-1">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
-              {passportPreview ? (
+              {logoPreview ? (
                 <Image
-                  src={passportPreview}
+                  src={logoPreview}
                   height="800"
                   width="1600"
                   alt="Passport Preview"
@@ -102,7 +102,7 @@ export default function AccountProfile() {
               <input
                 type="file"
                 accept="image/*"
-                onChange={handlePassportChange}
+                onChange={handleLogoChange}
                 className="hidden"
               />
             </label>
@@ -121,8 +121,13 @@ export default function AccountProfile() {
               type="text"
               id="name"
               name="name"
-              value={formData.name}
-              onChange={handleChange}
+              value={academyProfile.name}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
@@ -137,11 +142,16 @@ export default function AccountProfile() {
               Contact Number
             </label>
             <input
-              type="tel"
+              type="number"
               id="contactNumber"
               name="contactNumber"
-              value={formData.contactNumber}
-              onChange={handleChange}
+              value={academyProfile.contactNumber}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  contactNumber: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
@@ -159,8 +169,13 @@ export default function AccountProfile() {
               type="email"
               id="emailAddress"
               name="emailAddress"
-              value={formData.emailAddress}
-              onChange={handleChange}
+              value={academyProfile.email}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
@@ -178,8 +193,13 @@ export default function AccountProfile() {
               type="text"
               id="academyName"
               name="academyName"
-              value={formData.academyName}
-              onChange={handleChange}
+              value={academyProfile.academyName}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  academyName: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />

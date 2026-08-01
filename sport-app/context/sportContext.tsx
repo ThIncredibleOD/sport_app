@@ -2,8 +2,8 @@
 
 import { createContext, useContext } from "react";
 
-type AcademyProfile = {
-  id: number;
+export type AcademyProfile = {
+  id: string;
   name: string;
   contactNumber: string;
   email: string;
@@ -11,16 +11,16 @@ type AcademyProfile = {
   logo: File | null;
 };
 
-type HeadCoach = {
-  id: number;
+export type HeadCoach = {
+  id: string;
   passport: File | null;
   fullName: string;
   dateOfBirth: string;
   nationality: string;
 };
 
-type Player = {
-  id: number;
+export type Player = {
+  id: string;
   passport: File | null;
   fullName: string;
   dateOfBirth: string;
@@ -44,10 +44,10 @@ type RegisterContextType = {
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
 };
 
-export const RegisterContext = createContext<RegisterContextType | null>(null);
+export const SportContext = createContext<RegisterContextType | null>(null);
 
 export function useRegister() {
-  const context = useContext(RegisterContext);
+  const context = useContext(SportContext);
   if (!context) throw new Error("useUser must be used inside provider");
   return context;
 }
