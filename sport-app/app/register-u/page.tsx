@@ -37,7 +37,7 @@ export default function AccountProfile() {
     console.log("Submitted Profile Data:", formData, passportPreview);
 
     // Navigate to next step
-    router.push('/payment-u');
+    router.push('/registration-u');
   };
 
   return (

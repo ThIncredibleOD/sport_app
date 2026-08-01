@@ -46,7 +46,7 @@ export default function RegistrationPayment() {
         {/* Back Link */}
         <button 
           type="button"
-          onClick={() => router.push('/secondary-register')}
+          onClick={() => router.push('/secondary-playreg')}
           className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors duration-150 mb-4 relative z-10"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
