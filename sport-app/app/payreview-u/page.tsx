@@ -11,7 +11,7 @@ export default function PaymentUnderReview() {
   useEffect(() => {
     const timer = setTimeout(() => {
       // push to the next page after 5 seconds
-      router.push('/registration-u'); 
+      router.push('/squad-u'); 
     }, 5000); // 5000 milliseconds = 5 seconds
 
     // Clean up the timer if the user navigates away manually before time expires

@@ -16,7 +16,7 @@ export default function SquadComplete() {
 
     // Automatically redirect after 5 seconds
     const timer = setTimeout(() => {
-      router.push('/secondary-squad'); 
+      router.push('/secondary-payment'); 
     }, 5000);
 
     // Clean up timers on unmount
