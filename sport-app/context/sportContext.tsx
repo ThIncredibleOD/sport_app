@@ -25,13 +25,14 @@ export type Player = {
   fullName: string;
   dateOfBirth: string;
   nationality: string;
-  jerseyNumber: number | null;
-  position: PlayerPosition | null;
+  jerseyNumber: string;
+  position: PlayerPosition;
   consentForm: File | null;
   proofOfAge: File | null;
+  passportPreview: string | null;
 };
 
-type PlayerPosition = "GOALKEEPER" | "DEFENDER" | "MIDFIELDER" | "FORWARD";
+type PlayerPosition = "GOALKEEPER" | "DEFENDER" | "MIDFIELDER" | "FORWARD" | "";
 
 type RegisterContextType = {
   academyProfile: AcademyProfile;

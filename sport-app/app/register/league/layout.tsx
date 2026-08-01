@@ -8,6 +8,19 @@ import {
 } from "@/context/sportContext";
 import { useState } from "react";
 
+export const createEmptyPlayer = (): Player => ({
+  id: crypto.randomUUID(),
+  passport: null,
+  fullName: "",
+  dateOfBirth: "",
+  nationality: "",
+  jerseyNumber: "",
+  position: "",
+  consentForm: null,
+  proofOfAge: null,
+  passportPreview: null,
+});
+
 export default function LeagueLayout({
   children,
 }: {
@@ -28,7 +41,9 @@ export default function LeagueLayout({
     dateOfBirth: "",
     nationality: "",
   });
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<Player[]>(
+    Array.from({ length: 18 }, () => createEmptyPlayer()),
+  );
 
   return (
     <SportContext.Provider

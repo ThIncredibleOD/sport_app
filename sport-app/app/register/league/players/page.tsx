@@ -12,38 +12,13 @@ import {
   AlertTriangle,
   RotateCcw,
 } from "lucide-react";
-
-interface Player {
-  playerFullName: string;
-  dateOfBirth: string;
-  StateOfOrigin: string;
-  nationality: string;
-  jerseyNumber: string;
-  position: string;
-  passportPreview: string | null;
-  consentForm: File | null;
-  proofOfAge: File | null;
-}
-
-const createEmptyPlayer = (): Player => ({
-  playerFullName: "",
-  dateOfBirth: "",
-  StateOfOrigin: "",
-  nationality: "",
-  jerseyNumber: "",
-  position: "",
-  passportPreview: null,
-  consentForm: null,
-  proofOfAge: null,
-});
+import { useRegister } from "@/context/sportContext";
+import { createEmptyPlayer } from "../layout";
+import Image from "next/image";
 
 export default function PlayerRegistration() {
+  const { players, setPlayers } = useRegister();
   const router = useRouter();
-
-  // Array of 18 player objects
-  const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 18 }, () => createEmptyPlayer()),
-  );
 
   // Track active player index (0 to 17)
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -105,7 +80,7 @@ export default function PlayerRegistration() {
     }
   };
 
-  const handleAddPlayerSubmit = (e: React.FormEvent) => {
+  const handleAddPlayerSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (currentIndex < 17) {
       setCurrentIndex((prev) => prev + 1);
@@ -148,10 +123,12 @@ export default function PlayerRegistration() {
 
         {/* Logo Banner & Number Indicator */}
         <div className="flex flex-col items-center relative z-10">
-          <img
+          <Image
             src="/under1.png"
+            height="800"
+            width="1200"
             alt="The Nathaniel Idowu Under 16 Football League"
-            className="h-20 w-auto object-contain mb-1"
+            className="h-20 w-auto object-contain"
           />
 
           {/* PLAYER PAGE NUMBER BADGE (1-18) */}
@@ -209,9 +186,11 @@ export default function PlayerRegistration() {
           <div className="flex flex-col items-center justify-center gap-2 py-1">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] transition-all overflow-hidden group">
               {currentPlayer.passportPreview ? (
-                <img
+                <Image
                   src={currentPlayer.passportPreview}
-                  alt="Passport Preview"
+                  height="800"
+                  width="1600"
+                  alt="Logo Preview"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -234,8 +213,8 @@ export default function PlayerRegistration() {
             </label>
             <input
               type="text"
-              name="playerFullName"
-              value={currentPlayer.playerFullName}
+              name="fullName"
+              value={currentPlayer.fullName}
               onChange={handleChange}
               placeholder="e.g. John Doe"
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none transition-all"
@@ -263,7 +242,7 @@ export default function PlayerRegistration() {
             </label>
             <input
               type="text"
-              name="Nationality"
+              name="nationality"
               value={currentPlayer.nationality}
               onChange={handleChange}
               placeholder="e.g. Nigerian"
