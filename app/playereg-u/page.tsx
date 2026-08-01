@@ -98,7 +98,7 @@ export default function PlayerRegistration() {
     }
   };
 
-  const handleNextSection = () => {
+  const handleNextSection = () => {pu
     console.log("All 18 players registered:", players);
     router.push('/complete-u'); 
   };
