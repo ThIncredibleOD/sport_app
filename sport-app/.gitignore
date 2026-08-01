@@ -45,3 +45,6 @@ node_modules/
 .env*.local
 build/
 dist/
+
+node_modules/
+.next/
