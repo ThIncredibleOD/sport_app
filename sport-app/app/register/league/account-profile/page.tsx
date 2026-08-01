@@ -67,7 +67,6 @@ export default function AccountProfile() {
           <div className="mb-4 flex justify-center">
             <Image
               src="/under1.png"
-              // fill
               height="800"
               width="1200"
               alt="The Nathaniel Idowu Under 16 Football League"
@@ -93,7 +92,7 @@ export default function AccountProfile() {
                   src={logoPreview}
                   height="800"
                   width="1600"
-                  alt="Passport Preview"
+                  alt="Logo Preview"
                   className="w-full h-full object-cover"
                 />
               ) : (

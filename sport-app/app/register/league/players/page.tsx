@@ -121,7 +121,7 @@ export default function PlayerRegistration() {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
     } else {
-      router.push("/registration-u");
+      router.push("/register/league/academy-squad");
     }
   };
 
@@ -138,7 +138,7 @@ export default function PlayerRegistration() {
         <div className="w-full flex justify-start relative z-10 mb-2">
           <button
             type="button"
-            onClick={() => router.push("/registration-u")}
+            onClick={() => router.push("/register/league/academy-squad")}
             className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />

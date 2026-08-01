@@ -1,50 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Plus, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { useRegister } from "@/context/sportContext";
+import Image from "next/image";
 
 export default function AcademySquadRegistration() {
+  const { headCoach, setHeadCoach } = useRegister();
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
-    headCoachFullName: "",
-    dateOfBirth: "",
-    nationality: "",
-  });
-
-  const [passportImage, setPassportImage] = useState<File | null>(null);
   const [passportPreview, setPassportPreview] = useState<string | null>(null);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPassportImage(file);
+      setHeadCoach((prev) => ({ ...prev, passport: file }));
       setPassportPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Log or handle squad data locally
     console.log("Submitted Squad Registration:", {
-      ...formData,
-      passportImage,
+      headCoach,
+      passportPreview,
     });
 
     // Navigate to the next step
     router.push("/register/league/players");
   };
+
+  useEffect(() => {
+    if (!headCoach.passport) return;
+
+    const url = URL.createObjectURL(headCoach.passport);
+    setPassportPreview(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [headCoach.passport]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
@@ -72,10 +70,12 @@ export default function AcademySquadRegistration() {
         <div className="flex flex-col items-center text-center relative z-10">
           {/* League Logo */}
           <div className="mb-4 flex justify-center">
-            <img
+            <Image
               src="/under1.png"
+              height="800"
+              width="1200"
               alt="The Nathaniel Idowu Under 16 Football League"
-              className="h-28 w-auto object-contain drop-shadow-md"
+              className="h-20 w-auto object-contain"
             />
           </div>
 
@@ -95,8 +95,10 @@ export default function AcademySquadRegistration() {
           <div className="flex flex-col items-center justify-center gap-2 py-2">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 backdrop-blur-sm cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
               {passportPreview ? (
-                <img
+                <Image
                   src={passportPreview}
+                  height="800"
+                  width="1600"
                   alt="Passport Preview"
                   className="w-full h-full object-cover"
                 />
@@ -129,8 +131,13 @@ export default function AcademySquadRegistration() {
               type="text"
               id="headCoachFullName"
               name="headCoachFullName"
-              value={formData.headCoachFullName}
-              onChange={handleChange}
+              value={headCoach.fullName}
+              onChange={(e) =>
+                setHeadCoach((prev) => ({
+                  ...prev,
+                  fullName: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 backdrop-blur-sm px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:bg-slate-950/60 focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
@@ -148,8 +155,13 @@ export default function AcademySquadRegistration() {
               type="date"
               id="dateOfBirth"
               name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleChange}
+              value={headCoach.dateOfBirth}
+              onChange={(e) =>
+                setHeadCoach((prev) => ({
+                  ...prev,
+                  dateOfBirth: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 backdrop-blur-sm px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:bg-slate-950/60 focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all [color-scheme:dark]"
             />
@@ -167,8 +179,13 @@ export default function AcademySquadRegistration() {
               type="text"
               id="nationality"
               name="nationality"
-              value={formData.nationality}
-              onChange={handleChange}
+              value={headCoach.nationality}
+              onChange={(e) =>
+                setHeadCoach((prev) => ({
+                  ...prev,
+                  nationality: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 backdrop-blur-sm px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:bg-slate-950/60 focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
