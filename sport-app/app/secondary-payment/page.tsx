@@ -1,21 +1,32 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Copy, Check, Upload, AlertTriangle, Loader2 } from 'lucide-react';
-import { submitRegistration, uploadPaymentReceipt } from '@/lib/api/registration';
-import { useRegistrationForm } from '@/context/sportContext'; 
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Copy,
+  Check,
+  Upload,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
+import {
+  submitRegistration,
+  uploadPaymentReceipt,
+} from "@/lib/api/registration";
+// import { useRegistrationForm } from '@/context/sportContext';
 
 export default function RegistrationPayment() {
   const router = useRouter();
 
   // Grab accumulated form data from previous steps
-  const { formData, resetForm } = useRegistrationForm();
+  // const { formData, resetForm } = useRegistrationForm();
 
   const [copied, setCopied] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   const accountNumber = "1000455849";
 
@@ -28,10 +39,9 @@ export default function RegistrationPayment() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setReceiptFile(e.target.files[0]);
-      setErrorMessage('');
+      setErrorMessage("");
     }
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,17 +52,19 @@ export default function RegistrationPayment() {
     }
 
     if (!formData.academy_name || formData.players.length === 0) {
-      setErrorMessage("Registration details are incomplete. Please go back and complete all steps.");
+      setErrorMessage(
+        "Registration details are incomplete. Please go back and complete all steps.",
+      );
       return;
     }
 
     setLoading(true);
-    setErrorMessage('');
+    setErrorMessage("");
 
     try {
       //  Create registration row, upload team logo, upload all player files & roster
       const newRegistration = await submitRegistration({
-        tournament_slug: 'secondary-league', // Ensure this matches your tournament slug
+        tournament_slug: "secondary-league", // Ensure this matches your tournament slug
         contact_name: formData.contact_name,
         contact_phone: formData.contact_phone,
         contact_email: formData.contact_email,
@@ -73,7 +85,9 @@ export default function RegistrationPayment() {
       // 4. Navigate to confirmation review page passing the new registration ID
       router.push(`/secondary-payrev?regId=${newRegistration.id}`);
     } catch (error: any) {
-      setErrorMessage(error.message || "Failed to submit registration. Please try again.");
+      setErrorMessage(
+        error.message || "Failed to submit registration. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -82,7 +96,7 @@ export default function RegistrationPayment() {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
         style={{ backgroundImage: `url('/hero.png')` }}
       />
@@ -91,11 +105,10 @@ export default function RegistrationPayment() {
 
       {/* Glass Modal Card */}
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none overflow-hidden">
-        
         {/* Back Link */}
-        <button 
+        <button
           type="button"
-          onClick={() => router.push('/secondary-playreg')}
+          onClick={() => router.push("/secondary-playreg")}
           className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors duration-150 mb-4 relative z-10"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -105,18 +118,20 @@ export default function RegistrationPayment() {
         {/* Header / Logo Section */}
         <div className="flex flex-col items-center text-center relative z-10">
           <div className="mb-4 flex justify-center">
-            <img 
-              src="/secondary.png" 
-              alt="The Nathaniel Idowu Secondary Football League" 
+            <img
+              src="/secondary.png"
+              alt="The Nathaniel Idowu Secondary Football League"
               className="h-28 w-auto object-contain drop-shadow-md"
             />
           </div>
 
           <h1 className="text-2xl font-bold tracking-tight text-white uppercase drop-shadow-sm leading-tight">
-            Registration Fee &<br />Payment
+            Registration Fee &<br />
+            Payment
           </h1>
           <p className="mt-2 text-xs text-slate-300 max-w-xs leading-relaxed">
-            Please transfer the registration fee to the account below and upload your receipt to secure one of the 10 available slots.
+            Please transfer the registration fee to the account below and upload
+            your receipt to secure one of the 10 available slots.
           </p>
         </div>
 
@@ -128,7 +143,6 @@ export default function RegistrationPayment() {
 
         {/* Form Container */}
         <form className="mt-6 space-y-4 relative z-10" onSubmit={handleSubmit}>
-          
           {/* Payment Info Box */}
           <div className="rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-4 text-xs space-y-2.5">
             <div className="flex justify-between items-center">
@@ -151,14 +165,20 @@ export default function RegistrationPayment() {
             <div className="flex justify-between items-center pt-1 border-t border-white/10">
               <span className="text-slate-400">Account Number:</span>
               <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-white text-sm">{accountNumber}</span>
+                <span className="font-mono font-bold text-white text-sm">
+                  {accountNumber}
+                </span>
                 <button
                   type="button"
                   onClick={handleCopy}
                   className="p-1 text-slate-300 hover:text-white transition-colors"
                   title="Copy Account Number"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -170,11 +190,11 @@ export default function RegistrationPayment() {
                 <span className="truncate max-w-[200px]">
                   {receiptFile ? receiptFile.name : "Upload Receipt"}
                 </span>
-                <input 
-                  type="file" 
-                  accept="image/*,.pdf" 
-                  onChange={handleFileChange} 
-                  className="hidden" 
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
               </label>
             </div>
@@ -206,7 +226,6 @@ export default function RegistrationPayment() {
               )}
             </button>
           </div>
-
         </form>
       </div>
     </div>

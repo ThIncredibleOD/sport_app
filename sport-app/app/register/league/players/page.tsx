@@ -83,7 +83,7 @@ export default function PlayerRegistration() {
 
   const handleAddPlayerSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentIndex < 4) {
+    if (currentIndex < 17) {
       setCurrentIndex((prev) => prev + 1);
     }
   };
@@ -115,12 +115,12 @@ export default function PlayerRegistration() {
   };
 
   const handleNextSection = async () => {
-    // console.log("All 18 players registered:", players);
-    // router.push("/complete-u");
+    console.log("All 18 players registered:", players);
+    router.push("/complete-u");
 
-    const data = await handleSubmissionSupabase();
+    // const data = await handleSubmissionSupabase();
 
-    console.log(data);
+    // console.log(data);
   };
 
   const handleBottomBack = () => {

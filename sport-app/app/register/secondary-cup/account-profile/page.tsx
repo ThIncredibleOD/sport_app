@@ -1,44 +1,45 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import Image from "next/image";
+import { useRegister } from "@/context/sportContext";
 
 export default function AccountProfile() {
+  const { academyProfile, setAcademyProfile } = useRegister();
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    contactNumber: "",
-    emailAddress: "",
-    academyName: "",
-  });
-
   // State for Passport Upload & Preview
-  const [passportPreview, setPassportPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  // Passport Image Handler
-  const handlePassportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Logo Image Handler
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPassportPreview(URL.createObjectURL(file));
+      setAcademyProfile((prev) => ({ ...prev, logo: file }));
+      setLogoPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Submitted Profile Data:", formData, passportPreview);
+    console.log("Submitted Profile Data:", academyProfile, logoPreview);
 
     // Navigate to next step
     router.push("/register/secondary-cup/academy-squad");
   };
+
+  useEffect(() => {
+    if (!academyProfile.logo) return;
+
+    const url = URL.createObjectURL(academyProfile.logo);
+    setLogoPreview(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [academyProfile.logo]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden">
@@ -54,7 +55,7 @@ export default function AccountProfile() {
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
         {/* Back Link */}
         <a
-          href="/get-started"
+          href="/register"
           className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors duration-150 mb-4"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -64,9 +65,11 @@ export default function AccountProfile() {
         {/* Header / Logo Section */}
         <div className="flex flex-col items-center text-center">
           <div className="mb-4 flex justify-center">
-            <img
-              src="/secondary.png"
-              alt="The Nathaniel Idowu Secondary Football League"
+            <Image
+              src="/under1.png"
+              height="800"
+              width="1200"
+              alt="The Nathaniel Idowu Under 16 Football League"
               className="h-20 w-auto object-contain"
             />
           </div>
@@ -84,10 +87,12 @@ export default function AccountProfile() {
           {/* Upload logo  */}
           <div className="flex flex-col items-center justify-center gap-2 py-1">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
-              {passportPreview ? (
-                <img
-                  src={passportPreview}
-                  alt="Passport Preview"
+              {logoPreview ? (
+                <Image
+                  src={logoPreview}
+                  height="800"
+                  width="1600"
+                  alt="Logo Preview"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -96,7 +101,7 @@ export default function AccountProfile() {
               <input
                 type="file"
                 accept="image/*"
-                onChange={handlePassportChange}
+                onChange={handleLogoChange}
                 className="hidden"
               />
             </label>
@@ -115,8 +120,13 @@ export default function AccountProfile() {
               type="text"
               id="name"
               name="name"
-              value={formData.name}
-              onChange={handleChange}
+              value={academyProfile.name}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
@@ -131,11 +141,16 @@ export default function AccountProfile() {
               Contact Number
             </label>
             <input
-              type="tel"
+              type="number"
               id="contactNumber"
               name="contactNumber"
-              value={formData.contactNumber}
-              onChange={handleChange}
+              value={academyProfile.contactNumber}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  contactNumber: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
@@ -153,8 +168,13 @@ export default function AccountProfile() {
               type="email"
               id="emailAddress"
               name="emailAddress"
-              value={formData.emailAddress}
-              onChange={handleChange}
+              value={academyProfile.email}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
@@ -172,8 +192,13 @@ export default function AccountProfile() {
               type="text"
               id="academyName"
               name="academyName"
-              value={formData.academyName}
-              onChange={handleChange}
+              value={academyProfile.academyName}
+              onChange={(e) =>
+                setAcademyProfile((prev) => ({
+                  ...prev,
+                  academyName: e.target.value,
+                }))
+              }
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />

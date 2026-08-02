@@ -21,7 +21,7 @@ export const createEmptyPlayer = (): Player => ({
   passportPreview: null,
 });
 
-export default function LeagueLayout({
+export default function SecondaryCupLayout({
   children,
 }: {
   children: React.ReactNode;
