@@ -32,7 +32,7 @@ export default function RegisterTournament() {
             Register
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-300 max-w-xs leading-relaxed">
-            Select a tournament below to begin your academy's enrollment.
+            Select a tournament below to begin your academy&apos;s enrollment.
           </p>
         </div>
 
@@ -41,7 +41,7 @@ export default function RegisterTournament() {
           {/* BUTTON 1: The U16 Football League */}
           <button
             type="button"
-            onClick={() => router.push("/register-u")}
+            onClick={() => router.push("/register/league/account-profile")}
             className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
           >
             <div className="flex items-center gap-3 text-left">
@@ -67,7 +67,9 @@ export default function RegisterTournament() {
           {/* BUTTON 2: Secondary Cup */}
           <button
             type="button"
-            onClick={() => router.push("/secondary-register")}
+            onClick={() =>
+              router.push("/register/secondary-cup/account-profile")
+            }
             className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
           >
             <div className="flex items-center gap-3 text-left">
@@ -93,7 +95,7 @@ export default function RegisterTournament() {
           {/* BUTTON 3: Unity Cup */}
           <button
             type="button"
-            onClick={() => router.push("/unity-register")}
+            onClick={() => router.push("/register/unity-cup/account-profile")}
             className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
           >
             <div className="flex items-center gap-3 text-left">

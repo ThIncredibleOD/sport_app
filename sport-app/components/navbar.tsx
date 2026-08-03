@@ -151,7 +151,7 @@ export default function Navbar() {
         {/*Button*/}
         <div>
           <Link
-            href="/get-started"
+            href="/register"
             className="whitespace-nowrap flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-yellow-600 hover:to-amber-700 text-white px-4 py-1 md:py-2 rounded-md font-semibold shadow-md transition-all duration-300"
           >
             Register

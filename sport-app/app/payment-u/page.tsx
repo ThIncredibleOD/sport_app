@@ -2,12 +2,20 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Copy, Check, Upload, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Copy, Check, Upload, AlertTriangle, Loader2 } from 'lucide-react';
+import { submitRegistration, uploadPaymentReceipt } from '@/lib/api/registration';
+import { useRegistrationForm } from '@/context/sportContext';
 
 export default function RegistrationPayment() {
   const router = useRouter();
+
+  // Retrieve accumulated form data from previous steps
+  const { formData, resetForm } = useRegistrationForm();
+
   const [copied, setCopied] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const accountNumber = "1000455849";
 
@@ -20,14 +28,54 @@ export default function RegistrationPayment() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setReceiptFile(e.target.files[0]);
+      setErrorMessage('');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Uploaded Receipt:", receiptFile);
-    //  Navigate to next step ( Confirmation page)
-    router.push('/payreview-u');
+
+    if (!receiptFile) {
+      setErrorMessage("Please upload your payment receipt before proceeding.");
+      return;
+    }
+
+    if (!formData.academy_name || formData.players.length === 0) {
+      setErrorMessage("Registration details are incomplete. Please go back and complete all steps.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      //  Persist full registration, team logo, and player files to Supabase
+      const newRegistration = await submitRegistration({
+        tournament_slug: 'under16-league', // Ensure this matches your U-16 tournament slug
+        contact_name: formData.contact_name,
+        contact_phone: formData.contact_phone,
+        contact_email: formData.contact_email,
+        academy_name: formData.academy_name,
+        coach_full_name: formData.coach_full_name,
+        coach_dob: formData.coach_dob,
+        coach_nationality: formData.coach_nationality,
+        team_logo: formData.team_logo || undefined,
+        players: formData.players,
+      });
+
+      //  Upload receipt linked directly to the new registration record
+      await uploadPaymentReceipt(newRegistration.id, receiptFile);
+
+      // 3. Clear context form state
+      resetForm();
+
+      // 4. Navigate to confirmation review page
+      router.push(`/payreview-u?regId=${newRegistration.id}`);
+    } catch (error: any) {
+      setErrorMessage(error.message || "Failed to submit registration. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,7 +88,7 @@ export default function RegistrationPayment() {
       {/* Dark Layer */}
       <div className="absolute inset-0 bg-slate-950/50" />
 
-      {/*Glass Modal Card */}
+      {/* Glass Modal Card */}
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none overflow-hidden">
         
         {/* Back Link */}
@@ -70,6 +118,12 @@ export default function RegistrationPayment() {
             Please transfer the registration fee to the account below and upload your receipt to secure one of the 10 available slots.
           </p>
         </div>
+
+        {errorMessage && (
+          <div className="mt-4 p-2.5 rounded bg-red-500/20 border border-red-500/40 text-xs text-red-200 text-center relative z-10">
+            {errorMessage}
+          </div>
+        )}
 
         {/* Form Container */}
         <form className="mt-6 space-y-4 relative z-10" onSubmit={handleSubmit}>
@@ -112,7 +166,9 @@ export default function RegistrationPayment() {
             <div className="pt-2">
               <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2.5 px-4 text-xs font-semibold text-slate-950 transition-all cursor-pointer shadow-md">
                 <Upload className="h-4 w-4" />
-                <span>{receiptFile ? receiptFile.name : "Upload Receipt"}</span>
+                <span className="truncate max-w-[200px]">
+                  {receiptFile ? receiptFile.name : "Upload Receipt"}
+                </span>
                 <input 
                   type="file" 
                   accept="image/*,.pdf" 
@@ -129,14 +185,24 @@ export default function RegistrationPayment() {
             </div>
           </div>
 
-          {/* Next Button */}
+          {/* Submit Button */}
           <div className="pt-2">
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2 px-4 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#15803d] shadow-lg shadow-emerald-950/50 focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:ring-offset-2 focus:ring-offset-[#0f172a]"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2 px-4 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#15803d] shadow-lg shadow-emerald-950/50 focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:ring-offset-2 focus:ring-offset-[#0f172a] disabled:opacity-50"
             >
-              <span>Next</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              {loading ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Submitting Registration...</span>
+                </>
+              ) : (
+                <>
+                  <span>Next</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </>
+              )}
             </button>
           </div>
 
