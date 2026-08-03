@@ -45,7 +45,7 @@ export default function Navbar() {
               <li>
                 <Link
                   href="/"
-                  className="flex items-center gap-2 p-2 whitespace-nowrap hover:bg-slate-500 rounded-sm cursor-pointer"
+                  className="flex text-green-400 items-center gap-2 p-2 whitespace-nowrap hover:bg-slate-500 rounded-sm cursor-pointer"
                 >
                   <House size={20} />
                   Home
