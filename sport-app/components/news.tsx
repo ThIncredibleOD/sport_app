@@ -77,45 +77,49 @@ export default function Events() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 md:mb-10">
           {/* Card 1 */}
           <EventCard
-            title="Peakline U-13 League Finale Concludes in Style"
+            title="Maracana Sports Complex to host Nathaniel Idowu summer camp"
             date="May 28 2026"
-            description="Exciting matchups and great talent on display."
-            imageSrc="/news.png"
-            linkHref="#event-1"
+            description="Witness the excitement as the Maracana Sports Complex prepares to host the Nathaniel Idowu Summer Camp."
+            imageSrc="/news01.png"
+            linkHref="https://thenationonlineng.net/maracana-sports-complex-to-host-nathaniel-idowu-summer-camp/
+"
+            
           />
 
           {/* Card 2 */}
           <EventCard
-            title="Peakline U-13 League Finale Concludes in Style"
+            title="Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos"
             date="May 28 2026"
-            description="Exciting matchups and great talent on display."
-            imageSrc="/pillar2.png"
-            linkHref="#event-2"
+            description="Captivating prices to be won by participants."
+            imageSrc="/news02.png"
+            linkHref="https://mediatoday.ng/nathaniel-idowu-foundation-to-host-maiden-summer-camp-for-young-athletes-in-lagos/
+"
           />
 
           {/* Card 3 */}
           <EventCard
-            title="Peakline U-13 League Finale Concludes in Style"
+            title="Maracana stadium to host Nathaniel Idowu Summer Camp"
             date="May 28 2026"
             description="Exciting matchups and great talent on display."
-            imageSrc="/pillar.png"
-            linkHref="#event-3"
+            imageSrc="/news04.png"
+            linkHref="https://punchng.com/maracana-stadium-to-host-nathaniel-idowu-summer-camp/"
           />
 
           {/* Card 4 */}
           <EventCard
-            title="Peakline U-13 League Finale Concludes in Style"
+            title="Organisers pick Maracana Stadium for Nathaniel Idowu Summer Camp"
             date="May 28 2026"
-            description="Exciting matchups and great talent on display."
-            imageSrc="/pillar3.png"
-            linkHref="#event-4"
+            description="Follow the latest updates on the preparations for the upcoming summer camp."
+            imageSrc="/news03.png"
+            linkHref="https://guardian.ng/sport/organisers-pick-maracana-stadium-for-nathaniel-idowu-summer-camp/
+"
           />
         </div>
 
         {/* Compact Bottom Centered "View All" Button */}
         <div className="flex justify-center">
           <Link
-            href="#all-events"
+            href="/news"
             className="inline-flex items-center gap-1.5 border border-slate-700 bg-transparent hover:bg-slate-900/50 hover:border-slate-500 text-white font-semibold text-xs py-2 px-4 rounded-md transition-all duration-300 group"
           >
             View All News & Events

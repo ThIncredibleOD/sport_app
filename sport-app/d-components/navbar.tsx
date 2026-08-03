@@ -41,7 +41,7 @@ const navLinks: NavLink[] = [
       {/* Navigation Links */}
         <ul className="flex items-center gap-10 font-medium">
           <li>
-            <Link href="/Homepage" className=" font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 transition-colors duration-300">
+            <Link href="/" className=" font-medium px-4 py-2 rounded-lg hover:bg-slate-100/10 transition-colors duration-300">
               Home
             </Link>
           </li>

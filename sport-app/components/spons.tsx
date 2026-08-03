@@ -24,22 +24,14 @@ export default function Spons() {
           
           {/* Register Button */}
           <Link
-            href="#register"
+            href="/get-started"
             className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-bold text-xs sm:text-sm py-2 px-4 sm:px-5 rounded-lg transition-all duration-300 shadow-sm hover:shadow group"
           >
             Register Your Team
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
 
-          {/* Sponsor Button */}
-          <Link
-            href="#sponsor"
-            className="inline-flex items-center gap-2 border border-emerald-500 bg-emerald-950/20 hover:bg-emerald-950/40 text-white font-bold text-xs sm:text-sm py-2 px-4 sm:px-5 rounded-lg transition-all duration-300 group"
-          >
-            Become a Sponsor
-            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
-
+        
         </div>
 
       </div>

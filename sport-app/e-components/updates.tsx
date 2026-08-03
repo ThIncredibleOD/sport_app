@@ -106,7 +106,7 @@ export default function Updates() {
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
               <img
-                src="/news1.jpg"
+                src="/news01.png"
                 alt="News"
                 className="h-full w-full object-cover"
               />
@@ -136,7 +136,7 @@ export default function Updates() {
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
               <img
-                src="/news2.jpg"
+                src="/news02.png"
                 alt="News"
                 className="h-full w-full object-cover"
               />
@@ -166,7 +166,7 @@ export default function Updates() {
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
               <img
-                src="/pillar2.png"
+                src="/news03.png"
                 alt="News"
                 className="h-full w-full object-cover"
               />
@@ -196,7 +196,7 @@ export default function Updates() {
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
               <img
-                src="/news2.png"
+                src="/news04.png"
                 alt="News"
                 className="h-full w-full object-cover"
               />
@@ -226,7 +226,7 @@ export default function Updates() {
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
               <img
-                src="/news3.png"
+                src="/news02.png"
                 alt="News"
                 className="h-full w-full object-cover"
               />
@@ -252,35 +252,7 @@ export default function Updates() {
             </div>
           </article>
 
-          {/* Card 6 */}
-          <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
-            <div className="relative h-36 w-full">
-              <img
-                src="/news4.png"
-                alt="News"
-                className="h-full w-full object-cover"
-              />
-              <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
-                ANNOUNCEMENTS
-              </span>
-            </div>
-            <div className="p-3.5">
-              <h2 className="text-sm font-bold leading-snug">
-                New Training Facility Comings Soon!
-              </h2>
-              <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
-              <p className="mt-1 text-xs text-slate-300">
-                Exciting matchups and great talent on display.
-              </p>
-              <a
-                href="#"
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
-              >
-                <span>Read More</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          </article>
+         
         </div>
 
         {/* View All Button */}
@@ -302,7 +274,7 @@ export default function Updates() {
             {/* Trending Item 1 */}
             <div className="flex gap-2.5">
               <img
-                src="/news5.png"
+                src="/news01.png"
                 alt="Trending"
                 className="h-12 w-16 rounded object-cover"
               />
@@ -317,7 +289,7 @@ export default function Updates() {
             {/* Trending Item 2 */}
             <div className="flex gap-2.5">
               <img
-                src="/news6.png"
+                src="/news02.png"
                 alt="Trending"
                 className="h-12 w-16 rounded object-cover"
               />
@@ -332,7 +304,7 @@ export default function Updates() {
             {/* Trending Item 3 */}
             <div className="flex gap-2.5">
               <img
-                src="/news7.png"
+                src="/news03.png"
                 alt="Trending"
                 className="h-12 w-16 rounded object-cover"
               />
@@ -347,7 +319,7 @@ export default function Updates() {
             {/* Trending Item 4 */}
             <div className="flex gap-2.5">
               <img
-                src="/news8.png"
+                src="/news04.png"
                 alt="Trending"
                 className="h-12 w-16 rounded object-cover"
               />
