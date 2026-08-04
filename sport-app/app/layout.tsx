@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   description:
     "A comprehensive football tournament registration platform that simplifies team registration, player enrollment, fixture management, and competition administration.",
   icons: {
-    icon: "./favicon.jpeg",
-    apple: "./favicon.jpeg", 
+    icon: "./favicon.jpg",
+    apple: "./favicon.jpg", 
   },
 };
 
