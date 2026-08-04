@@ -99,15 +99,15 @@ export default function PlayerRegistration() {
       coach_full_name: headCoach.fullName,
       coach_dob: headCoach.dateOfBirth,
       coach_nationality: headCoach.nationality,
-      team_logo: academyProfile.logo,
+      team_logo: academyProfile.logo as File,
 
       players: players.map((player) => ({
         full_name: player.fullName,
         dob: player.dateOfBirth,
         nationality: player.nationality,
         position: player.position,
-        consent_form: player.consentForm,
-        proof_of_age: player.proofOfAge,
+        consent_form: player.consentForm as File,
+        proof_of_age: player.proofOfAge as File,
       })),
     });
 

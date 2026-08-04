@@ -18,7 +18,7 @@ export interface RegistrationInput {
   coach_full_name: string;
   coach_dob: string;
   coach_nationality: string;
-  team_logo?: File; // Optional or required team profile picture
+  team_logo: File;
   players: PlayerInput[];
 }
 

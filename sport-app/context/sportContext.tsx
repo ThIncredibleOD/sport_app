@@ -95,7 +95,7 @@ export function useRegister() {
     contact_phone: context.academyProfile.contactNumber,
     contact_email: context.academyProfile.email,
     academy_name: context.academyProfile.academyName,
-    team_logo: context.academyProfile.logo,
+    team_logo: context.academyProfile.logo as File,
     coach_full_name: context.headCoach.fullName,
     coach_dob: context.headCoach.dateOfBirth,
     coach_nationality: context.headCoach.nationality,
