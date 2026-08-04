@@ -15,13 +15,13 @@ import {
   submitRegistration,
   uploadPaymentReceipt,
 } from "@/lib/api/registration";
-// import { useRegistrationForm } from '@/context/sportContext';
+import { useRegistrationForm } from '@/context/sportContext';
 
 export default function RegistrationPayment() {
   const router = useRouter();
 
   // Grab accumulated form data from previous steps
-  // const { formData, resetForm } = useRegistrationForm();
+  const { formData, resetForm } = useRegistrationForm();
 
   const [copied, setCopied] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
