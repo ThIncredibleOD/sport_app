@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "Peakline Sports",
   description:
     "A comprehensive football tournament registration platform that simplifies team registration, player enrollment, fixture management, and competition administration.",
+  icons: {
+    icon: "/favicon.jpeg",
+    apple: "/favicon.jpeg", 
+  },
 };
 
 export default function RootLayout({
