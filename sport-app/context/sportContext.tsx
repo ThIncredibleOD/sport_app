@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 export type AcademyProfile = {
   id: string;
@@ -47,8 +47,79 @@ type RegisterContextType = {
 
 export const SportContext = createContext<RegisterContextType | null>(null);
 
+const initialAcademy: AcademyProfile = {
+  id: "",
+  name: "",
+  contactNumber: "",
+  email: "",
+  academyName: "",
+  logo: null,
+};
+
+const initialCoach: HeadCoach = {
+  id: "",
+  passport: null,
+  fullName: "",
+  dateOfBirth: "",
+  nationality: "",
+};
+
+export function SportProvider({ children }: { children: React.ReactNode }) {
+  const [academyProfile, setAcademyProfile] = useState<AcademyProfile>(initialAcademy);
+  const [headCoach, setHeadCoach] = useState<HeadCoach>(initialCoach);
+  const [players, setPlayers] = useState<Player[]>([]);
+
+  return (
+    <SportContext.Provider
+      value={{
+        academyProfile,
+        setAcademyProfile,
+        headCoach,
+        setHeadCoach,
+        players,
+        setPlayers,
+      }}
+    >
+      {children}
+    </SportContext.Provider>
+  );
+}
+
 export function useRegister() {
   const context = useContext(SportContext);
-  if (!context) throw new Error("useUser must be used inside provider");
-  return context;
+  if (!context) throw new Error("useRegister must be used inside SportProvider");
+
+  // Format context properties into the 'formData' shape expected by submitRegistration
+  const formData = {
+    contact_name: context.academyProfile.name,
+    contact_phone: context.academyProfile.contactNumber,
+    contact_email: context.academyProfile.email,
+    academy_name: context.academyProfile.academyName,
+    team_logo: context.academyProfile.logo,
+    coach_full_name: context.headCoach.fullName,
+    coach_dob: context.headCoach.dateOfBirth,
+    coach_nationality: context.headCoach.nationality,
+    players: context.players.map((p) => ({
+      full_name: p.fullName,
+      dob: p.dateOfBirth,
+      nationality: p.nationality,
+      position: p.position,
+      consent_form: p.consentForm as File,
+      proof_of_age: p.proofOfAge as File,
+    })),
+  };
+
+  const resetForm = () => {
+    context.setAcademyProfile(initialAcademy);
+    context.setHeadCoach(initialCoach);
+    context.setPlayers([]);
+  };
+
+  return {
+    ...context,
+    formData,
+    resetForm,
+  };
 }
+
+export const useRegistrationForm = useRegister;
