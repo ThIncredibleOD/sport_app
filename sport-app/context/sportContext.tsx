@@ -87,9 +87,32 @@ export function SportProvider({ children }: { children: React.ReactNode }) {
 
 export function useRegister() {
   const context = useContext(SportContext);
-  if (!context) throw new Error("useRegister must be used inside SportProvider");
 
-  // Format context properties into the 'formData' shape expected by submitRegistration
+  // Safe fallback for SSR / Next.js static prerendering when Provider isn't mounted yet
+  if (!context) {
+    return {
+      academyProfile: initialAcademy,
+      setAcademyProfile: () => {},
+      headCoach: initialCoach,
+      setHeadCoach: () => {},
+      players: [],
+      setPlayers: () => {},
+      formData: {
+        contact_name: "",
+        contact_phone: "",
+        contact_email: "",
+        academy_name: "",
+        team_logo: null as unknown as File,
+        coach_full_name: "",
+        coach_dob: "",
+        coach_nationality: "",
+        players: [],
+      },
+      resetForm: () => {},
+    };
+  }
+
+  // Format context properties into 'formData' expected by submitRegistration
   const formData = {
     contact_name: context.academyProfile.name,
     contact_phone: context.academyProfile.contactNumber,
