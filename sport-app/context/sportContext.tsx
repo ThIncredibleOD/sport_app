@@ -3,6 +3,9 @@
 import { createContext, useContext } from "react";
 
 export type AcademyProfile = {
+  teamLogo: undefined;
+  contactEmail: string;
+  contactPhone: string;
   id: string;
   name: string;
   contactNumber: string;
@@ -12,6 +15,7 @@ export type AcademyProfile = {
 };
 
 export type HeadCoach = {
+  dob: string;
   id: string;
   passport: File | null;
   fullName: string;

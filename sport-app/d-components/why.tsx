@@ -17,19 +17,40 @@ export default function Why() {
               Peakline Sport World?
             </h3>
           </div>
+        
 
           {/* Benefits List */}
-          <ul className="space-y-3">
-            {[1, 2, 3, 4, 5].map((item) => (
-              <li key={item} className="flex items-center gap-3">
-                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                <span className="text-[13px] text-slate-200">
-                  Professional training and development
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+<ul className="space-y-3">
+  
+  <li className="flex items-center gap-3">
+    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+    <span className="text-[13px] text-slate-200">
+     Brand visibility at tournaments, camps, and on Live YouTube
+    </span>
+  </li>
+
+  <li className="flex items-center gap-3">
+    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+    <span className="text-[13px] text-slate-200">
+      Community engagement across 20+ LGAs in Lagos
+    </span>
+  </li>
+
+  <li className="flex items-center gap-3">
+    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+    <span className="text-[13px] text-slate-200">
+      CSR impact through youth development and health programs
+    </span>
+  </li>
+
+  <li className="flex items-center gap-3">
+    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+    <span className="text-[13px] text-slate-200">
+       Access to a database of 1000+ young athletes annually.
+    </span>
+  </li>
+</ul>
+  </div>
 
         {/* Right Column: Featured Image */}
         <div className="w-full">
@@ -42,6 +63,6 @@ export default function Why() {
           />
         </div>
       </div>
-    </section>
+    </section>  
   );
 }

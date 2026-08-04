@@ -24,7 +24,7 @@ export default function Spons() {
           
           {/* Register Button */}
           <Link
-            href="/get-started"
+            href="/register"
             className="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-950 font-bold text-xs sm:text-sm py-2 px-4 sm:px-5 rounded-lg transition-all duration-300 shadow-sm hover:shadow group"
           >
             Register Your Team

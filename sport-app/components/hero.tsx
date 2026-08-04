@@ -41,7 +41,7 @@ export default function Hero() {
           <div className="mt-10 flex flex-wrap gap-4 items-center">
             {/* Button 1: Green Glass Button */}
             <Link
-              href="#leagues"
+              href="/register"
               className="flex items-center gap-2 bg-green-800/40 hover:bg-green-800/60 border border-green-500/30 backdrop-blur-md text-white font-semibold px-6 py-3.5 rounded-lg shadow-lg shadow-green-950/20 transition-all duration-300 hover:-translate-y-0.5 group"
             >
               Explore Our Leagues
@@ -49,10 +49,12 @@ export default function Hero() {
             </Link>
 
             {/* Button 2: Frosted Gray Glass Button */}
+            <a href="https://drive.google.com/file/d/1tCScozNRAykBDyWUU-CLrdE8x5HdyCJl/view?usp=sharing">
             <button className="flex items-center gap-2 bg-slate-900/40 hover:bg-slate-900/60 border border-slate-400/20 backdrop-blur-md text-white font-semibold px-6 py-3.5 rounded-lg shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
               <Play className="w-5 h-5 text-slate-200 fill-slate-200" />
               Watch Our Story
             </button>
+            </a>
           </div>
         </div>
       </div>

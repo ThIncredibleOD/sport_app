@@ -39,21 +39,35 @@ export default function ImageGallery() {
           {/* Row 1: Large Champions Photo */}
           <div className="md:col-span-7 relative h-55 sm:h-80 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg1.png" 
-              alt="Champions Trophy Celebration" 
+              src="/pic1.jpg" 
+              alt="U-14 Trophy Celebration" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Champions Trophy Celebration</p>
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">U-14 Trophy Celebration</p>
             </div>
           </div>
 
           {/* Row 1: Action Match Shot */}
           <div className="md:col-span-5 relative h-55 sm:h-80 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg2.png" 
+              src="/pic2.jpg" 
+              alt="Girl Team Lineup" 
+              fill 
+              className="object-cover group-hover:scale-105 transition-transform duration-300" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+            <div className="absolute bottom-4 left-4 z-10 text-white">
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Girl Team Lineup</p>
+            </div>
+          </div>
+
+          {/* Row 2: Left Small Photo */}
+          <div className="md:col-span-4 relative h-55 sm:h-64 rounded-2xl overflow-hidden group border border-slate-900">
+            <Image 
+              src="/pic3.jpg" 
               alt="Match Action Shot" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -64,80 +78,66 @@ export default function ImageGallery() {
             </div>
           </div>
 
-          {/* Row 2: Left Small Photo */}
-          <div className="md:col-span-4 relative h-55 sm:h-64 rounded-2xl overflow-hidden group border border-slate-900">
-            <Image 
-              src="/pg3.png" 
-              alt="Youth Team Huddle" 
-              fill 
-              className="object-cover group-hover:scale-105 transition-transform duration-300" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-            <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Youth Team Huddle</p>
-            </div>
-          </div>
-
           {/* Row 2: Middle Sunset Huddle Photo */}
           <div className="md:col-span-4 relative h-55 sm:h-64 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pillar2.png" 
-              alt="Goal Celebration" 
+              src="/pic4.jpg" 
+              alt="Ongoing Training Session" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Goal Celebration</p>
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Ongoing Training Session</p>
             </div>
           </div>
 
           {/* Row 2: Right Corner Celebration */}
           <div className="md:col-span-4 relative h-55 sm:h-64 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg5.png" 
-              alt="Ongoing Match Action" 
+              src="/pic5.jpg" 
+              alt="Medal Award Ceremony" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Ongoing Match Action</p>
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Medal Award Ceremony</p>
             </div>
           </div>
 
           {/* Row 3: Wide Fans Banner */}
           <div className="md:col-span-7 relative h-72 sm:h-80 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg6.png" 
-              alt="Crowd & Full Pitch View" 
+              src="/pic6.jpg" 
+              alt="Prize Award Ceremony" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Crowd & Full Pitch View</p>
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Prize Award Ceremony</p>
             </div>
           </div>
 
           {/* Row 3: Player Sitting Pitchside */}
           <div className="md:col-span-5 relative h-72 sm:h-80 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg7.png" 
-              alt="Friendly Match Team Action" 
+              src="/pic7.jpg" 
+              alt="Team Celebration" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Friendly Match Team Action</p>
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Team Celebration</p>
             </div>
           </div>
 
           {/* Row 4: Bottom Left Photo */}
           <div className="md:col-span-4 relative h-55 sm:h-64 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg8.png" 
+              src="/pic10.jpg " 
               alt="Team Goal Celebration" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -151,22 +151,22 @@ export default function ImageGallery() {
           {/* Row 4: Bottom Stadium Wide View */}
           <div className="md:col-span-4 relative h-55 sm:h-64 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg9.png" 
-              alt="Kneeling Team Celebration" 
+              src="/pic9.jpg" 
+              alt="Friendly Match Kickoff" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Kneeling Goal Celebration</p>
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Friendly Match Kickoff</p>
             </div>
           </div>
 
           {/* Row 4: Bottom Right Celebration */}
           <div className="md:col-span-4 relative h-55 sm:h-64 rounded-2xl overflow-hidden group border border-slate-900">
             <Image 
-              src="/pg10.png" 
-              alt="Crowd Cheering" 
+              src="/pic8.jpg" 
+              alt="Meet Our Officials" 
               fill 
               className="object-cover group-hover:scale-105 transition-transform duration-300" 
             />
@@ -174,7 +174,7 @@ export default function ImageGallery() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
             {/* Code for text*/}
             <div className="absolute bottom-4 left-4 z-10 text-white">
-              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Crowd Cheering</p>
+              <p className="text-sm font-semibold tracking-wide drop-shadow-md">Meet Our Officials</p>
             </div>
           </div>
 

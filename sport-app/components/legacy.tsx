@@ -34,14 +34,14 @@ export default function Legacy() {
 
           {/* Paragraph (Compact text size with tight bottom margin) */}
           <p className="text-xs text-slate-600 leading-relaxed max-w-sm mb-4">
-            After a brief intermission, Peaklin Sports World is fully
+            After a brief intermission, Peakline Sports World is fully
             reactivated, evolved, and ready to set a higher standard for
             Nigerian sports.
           </p>
 
           {/* Compact Low-Profile Green Button */}
           <Link
-            href="#journey"
+            href="/about"
             className="inline-flex items-center gap-1.5 bg-green-800 hover:bg-green-900 text-white font-bold text-xs py-4 px-4 rounded-md shadow-sm hover:shadow-md transition-all duration-300 group"
           >
             Discover Our Journey

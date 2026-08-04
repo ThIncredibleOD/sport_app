@@ -4,13 +4,35 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Copy, Check, Upload, AlertTriangle, Loader2 } from 'lucide-react';
 import { submitRegistration, uploadPaymentReceipt } from '@/lib/api/registration';
-import { useRegistrationForm } from '@/context/sportContext';
+import * as sportContext from '@/context/sportContext';
 
 export default function RegistrationPayment() {
   const router = useRouter();
 
   // Retrieve accumulated form data from previous steps
-  const { formData, resetForm } = useRegistrationForm();
+  const fallbackFormState = {
+    formData: {
+      academy_name: '',
+      contact_name: '',
+      contact_phone: '',
+      contact_email: '',
+      coach_full_name: '',
+      coach_dob: '',
+      coach_nationality: '',
+      team_logo: null,
+      players: [],
+    },
+    resetForm: () => undefined,
+  };
+
+  const registrationFormHook =
+    (sportContext as any).useRegistrationForm ??
+    (sportContext as any).useRegistrationContext ??
+    null;
+
+  const { formData, resetForm } = registrationFormHook
+    ? registrationFormHook()
+    : fallbackFormState;
 
   const [copied, setCopied] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);

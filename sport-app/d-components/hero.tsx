@@ -10,7 +10,7 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/hero.png"
+          src="/aHero.jpg"
           alt="Grassroots football action"
           fill
           priority
@@ -43,7 +43,7 @@ export default function Hero() {
           <div className="mt-10 flex flex-wrap gap-4 items-center">
             {/* Button 1: Green Glass Button */}
             <Link
-              href="#leagues"
+              href="/register"
               className="flex items-center gap-2 bg-green-800/40 hover:bg-green-800/60 border border-green-500/30 backdrop-blur-md text-white font-semibold px-6 py-3.5 rounded-lg shadow-lg shadow-green-950/20 transition-all duration-300 hover:-translate-y-0.5 group"
             >
               Explore Our Leagues

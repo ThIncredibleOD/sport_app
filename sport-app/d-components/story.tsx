@@ -15,20 +15,16 @@ export default function Story() {
 
           <div className="space-y-3 text-[13px] text-slate-300 leading-relaxed">
             <p>
-              In Peakline we believe in the power of sport to transform lives,
-              build character, and unite communities. We are creating a new era
-              of sports excellence
+           Peakline Sports World Limited is a leading grassroots sports development and event management company in Nigeria.
+            For over 25 years, we have been committed to discovering, nurturing, and providing professional platforms for young athletes to thrive in sports, education, and life.
+
             </p>
             <p>
-              In Peakline we believe in the power of sport to transform lives,
-              build character, and unite communities. We are creating a new era
-              of sports excellence
+            We organize football tournaments, summer camps, training programmes, and community sports initiatives aimed at youth empowerment,
+             unity, and national development.
+
             </p>
-            <p>
-              In Peakline we believe in the power of sport to transform lives,
-              build character, and unite communities. We are creating a new era
-              of sports excellence
-            </p>
+            
             <p>
               In Peakline we believe in the power of sport to transform lives,
               build character, and unite communities. We are creating a new era

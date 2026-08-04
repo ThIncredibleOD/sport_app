@@ -19,7 +19,7 @@ export default function Updates() {
         <div className="space-y-4">
           <nav className="space-y-1">
             {/* Button 1: All News */}
-            <button className="flex w-full items-center gap-2.5 rounded-md bg-[#16a34a] px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-[#15803d]">
+            <button className="flex w-fulll items-center gap-2.5 rounded-md bg-[#16a34a] px-3 py-2 text-left text-xs font-medium text-white transition hover:bg-[#15803d]">
               <Newspaper className="h-4 w-4" />
               <span>All News</span>
             </button>
@@ -116,14 +116,14 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-                Peakline U-13 League Finale Concludes in Style
+                Maracana Sports Complex to host Nathaniel Idowu summer camp
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-                Exciting matchups and great talent on display.
+               Anticipating a thrilling experience and promising an unforgettable event for all attendees.
               </p>
               <a
-                href="#"
+                href="https://thenationonlineng.net/maracana-sports-complex-to-host-nathaniel-idowu-summer-camp/"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
               >
                 <span>Read More</span>
@@ -146,14 +146,14 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-                Peakline U-13 League Finale Concludes in Style
+                Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-                Exciting matchups and great talent on display.
+                Captivating prices to be won by participants.
               </p>
               <a
-                href="#"
+                href="https://mediatoday.ng/nathaniel-idowu-foundation-to-host-maiden-summer-camp-for-young-athletes-in-lagos/"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
               >
                 <span>Read More</span>
@@ -176,14 +176,14 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-                Peakline U-13 League Finale Concludes in Style
+               Organisers pick Maracana Stadium for Nathaniel Idowu Summer Camp
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-                Exciting matchups and great talent on display.
+                Follow the latest updates on the preparations for the upcoming summer camp.
               </p>
               <a
-                href="#"
+                href="https://guardian.ng/sport/organisers-pick-maracana-stadium-for-nathaniel-idowu-summer-camp/"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
               >
                 <span>Read More</span>
@@ -206,14 +206,14 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-                Peakline Joins FreeStack for Athletes
+                Maracana stadium to host Nathaniel Idowu Summer Camp
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
               <p className="mt-1 text-xs text-slate-300">
                 Exciting matchups and great talent on display.
               </p>
               <a
-                href="#"
+                href="https://punchng.com/maracana-stadium-to-host-nathaniel-idowu-summer-camp/"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
               >
                 <span>Read More</span>
@@ -236,14 +236,14 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-                Daniel Okoro: Rising Midfield Talent
+                Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-                Exciting matchups and great talent on display.
+                Captivating prices to be won by participants.
               </p>
               <a
-                href="#"
+                href="https://mediatoday.ng/nathaniel-idowu-foundation-to-host-maiden-summer-camp-for-young-athletes-in-lagos/"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
               >
                 <span>Read More</span>
@@ -257,10 +257,12 @@ export default function Updates() {
 
         {/* View All Button */}
         <div className="mt-6 flex justify-center">
+          <a href="/news">
           <button className="flex items-center gap-1.5 rounded-md border border-slate-700 bg-[#0f192e] px-5 py-2 text-xs font-medium transition hover:bg-slate-800">
             <span>View All News & Events</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
+          </a>
         </div>
       </main>
 

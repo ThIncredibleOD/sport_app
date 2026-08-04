@@ -15,13 +15,14 @@ import {
   submitRegistration,
   uploadPaymentReceipt,
 } from "@/lib/api/registration";
-// import { useRegistrationForm } from '@/context/sportContext';
+
+import { useRegister } from "@/context/sportContext";
 
 export default function RegistrationPayment() {
   const router = useRouter();
 
   // Grab accumulated form data from previous steps
-  // const { formData, resetForm } = useRegistrationForm();
+  const { academyProfile, headCoach, players } = useRegister();
 
   const [copied, setCopied] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -51,7 +52,7 @@ export default function RegistrationPayment() {
       return;
     }
 
-    if (!formData.academy_name || formData.players.length === 0) {
+    if (!academyProfile?.academyName || !players || players.length === 0) {
       setErrorMessage(
         "Registration details are incomplete. Please go back and complete all steps.",
       );
@@ -63,17 +64,29 @@ export default function RegistrationPayment() {
 
     try {
       //  Create registration row, upload team logo, upload all player files & roster
+      const playerPayloads = players.map((player) => ({
+        full_name:
+          (player as any).full_name ?? (player as any).fullName ?? "",
+        dob: (player as any).dob ?? "",
+        nationality: (player as any).nationality ?? "",
+        position: (player as any).position ?? "",
+        consent_form:
+          (player as any).consent_form ?? (player as any).consentForm,
+        proof_of_age:
+          (player as any).proof_of_age ?? (player as any).proofOfAge,
+      }));
+
       const newRegistration = await submitRegistration({
-        tournament_slug: "secondary-league", // Ensure this matches your tournament slug
-        contact_name: formData.contact_name,
-        contact_phone: formData.contact_phone,
-        contact_email: formData.contact_email,
-        academy_name: formData.academy_name,
-        coach_full_name: formData.coach_full_name,
-        coach_dob: formData.coach_dob,
-        coach_nationality: formData.coach_nationality,
-        team_logo: formData.team_logo || undefined,
-        players: formData.players,
+        tournament_slug: "secondary-league",
+        contact_name: academyProfile?.contactNumber ?? "",
+        contact_phone: academyProfile?.contactPhone ?? "",
+        contact_email: academyProfile?.contactEmail ?? "",
+        academy_name: academyProfile?.academyName ?? "",
+        coach_full_name: headCoach?.fullName ?? "",
+        coach_dob: headCoach?.dob ?? "",
+        coach_nationality: headCoach?.nationality ?? "",
+        team_logo: academyProfile?.teamLogo || undefined,
+        players: playerPayloads,
       });
 
       // Upload payment receipt linked to the newly created registration ID
@@ -231,3 +244,7 @@ export default function RegistrationPayment() {
     </div>
   );
 }
+function resetForm() {
+    throw new Error("Function not implemented.");
+}
+

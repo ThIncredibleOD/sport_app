@@ -23,7 +23,7 @@ export default function OurPurpose() {
             <h3 className="text-[13px] font-bold uppercase tracking-wider text-green-500">Our Mission</h3>
           </div>
           <p className="text-[13px] text-slate-300 leading-normal max-w-xs">
-            After a brief intermission, Peaklin Sports World is fully reactivated, evolved, and ready to set a higher standard for Nigerian sports.
+            To elevate grassroots sports development by discovering talent, empowering youth through education and unity, building local infrastructure, and opening doors to professional and academic opportunities.
           </p>
         </div>
 
@@ -32,7 +32,8 @@ export default function OurPurpose() {
           <Eye className="w-7 h-7 text-green-500" />
           <h3 className="text-[13px] font-bold uppercase tracking-wider text-green-500">Our Vision</h3>
           <p className="text-[13px] text-slate-300 leading-normal max-w-xs">
-            After a brief intermission, Peaklin Sports World is fully reactivated, evolved, and ready to set a higher standard for Nigerian sports.
+           To build a generation of disciplined, healthy, and globally competitive athletes and leaders through sports.
+
           </p>
         </div>
 
@@ -41,7 +42,7 @@ export default function OurPurpose() {
           <Heart className="w-7 h-7 text-green-500" />
           <h3 className="text-[13px] font-bold uppercase tracking-wider text-green-500">Our Value</h3>
           <p className="text-[13px] text-slate-300 leading-normal max-w-xs">
-            After a brief intermission, Peaklin Sports World is fully reactivated, evolved, and ready to set a higher standard for Nigerian sports.
+            Excellence | Unity | Integrity | Empowerment | Community
           </p>
         </div>
 

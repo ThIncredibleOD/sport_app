@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Copy, Check, Upload, AlertTriangle, Loader2 } from 'lucide-react';
-import { submitRegistration, uploadPaymentReceipt } from '@/lib/api/registration';
-import { useRegistrationForm } from '@/context/sportContext'; 
+import { submitRegistration, uploadPaymentReceipt } from '@/lib/api/registration'; 
 
 export default function RegistrationPayment() {
   const router = useRouter();
@@ -202,4 +201,8 @@ export default function RegistrationPayment() {
       </div>
     </div>
   );
+}
+
+function useRegistrationForm(): { formData: any; resetForm: any; } {
+    throw new Error('Function not implemented.');
 }
