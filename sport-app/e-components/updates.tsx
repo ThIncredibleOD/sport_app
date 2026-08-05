@@ -118,7 +118,7 @@ export default function Updates() {
               <h2 className="text-sm font-bold leading-snug">
                 Maracana Sports Complex to host Nathaniel Idowu summer camp
               </h2>
-              <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
+              <p className="mt-1 text-[10px] text-slate-400">July 13 2026</p>
               <p className="mt-1 text-xs text-slate-300">
                Anticipating a thrilling experience and promising an unforgettable event for all attendees.
               </p>
@@ -148,7 +148,7 @@ export default function Updates() {
               <h2 className="text-sm font-bold leading-snug">
                 Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos
               </h2>
-              <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
+              <p className="mt-1 text-[10px] text-slate-400">July 12 2026</p>
               <p className="mt-1 text-xs text-slate-300">
                 Captivating prices to be won by participants.
               </p>
@@ -178,7 +178,7 @@ export default function Updates() {
               <h2 className="text-sm font-bold leading-snug">
                Organisers pick Maracana Stadium for Nathaniel Idowu Summer Camp
               </h2>
-              <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
+              <p className="mt-1 text-[10px] text-slate-400">July 13 2026</p>
               <p className="mt-1 text-xs text-slate-300">
                 Follow the latest updates on the preparations for the upcoming summer camp.
               </p>
@@ -208,7 +208,7 @@ export default function Updates() {
               <h2 className="text-sm font-bold leading-snug">
                 Maracana stadium to host Nathaniel Idowu Summer Camp
               </h2>
-              <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
+              <p className="mt-1 text-[10px] text-slate-400">July 13 2026</p>
               <p className="mt-1 text-xs text-slate-300">
                 Exciting matchups and great talent on display.
               </p>
@@ -238,7 +238,7 @@ export default function Updates() {
               <h2 className="text-sm font-bold leading-snug">
                Nathaniel Idowu Summer Camp 1.0 Kicks Off As 321 Children Begin Month-Long Sports Development Programme
               </h2>
-              <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
+              <p className="mt-1 text-[10px] text-slate-400">August 4 2026</p>
               <p className="mt-1 text-xs text-slate-300">
                 New talents to behold
               </p>

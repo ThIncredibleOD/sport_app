@@ -78,7 +78,7 @@ export default function Events() {
           {/* Card 1 */}
           <EventCard
             title="Maracana Sports Complex to host Nathaniel Idowu summer camp"
-            date="May 28 2026"
+            date="July 13 2026"
             description="Witness the excitement as the Maracana Sports Complex prepares to host the Nathaniel Idowu Summer Camp."
             imageSrc="/news01.png"
             linkHref="https://thenationonlineng.net/maracana-sports-complex-to-host-nathaniel-idowu-summer-camp/
@@ -89,7 +89,7 @@ export default function Events() {
           {/* Card 2 */}
           <EventCard
             title="Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos"
-            date="May 28 2026"
+            date="July 12 2026"
             description="Captivating prices to be won by participants."
             imageSrc="/news02.png"
             linkHref="https://mediatoday.ng/nathaniel-idowu-foundation-to-host-maiden-summer-camp-for-young-athletes-in-lagos/
@@ -99,7 +99,7 @@ export default function Events() {
           {/* Card 3 */}
           <EventCard
             title="Maracana stadium to host Nathaniel Idowu Summer Camp"
-            date="May 28 2026"
+            date="July 13 2026"
             description="Exciting matchups and great talent on display."
             imageSrc="/news04.png"
             linkHref="https://punchng.com/maracana-stadium-to-host-nathaniel-idowu-summer-camp/"
@@ -108,7 +108,7 @@ export default function Events() {
           {/* Card 4 */}
           <EventCard
             title="Organisers pick Maracana Stadium for Nathaniel Idowu Summer Camp"
-            date="May 28 2026"
+            date="July 13 2026"
             description="Follow the latest updates on the preparations for the upcoming summer camp."
             imageSrc="/news03.png"
             linkHref="https://guardian.ng/sport/organisers-pick-maracana-stadium-for-nathaniel-idowu-summer-camp/
