@@ -226,7 +226,7 @@ export default function Updates() {
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
               <img
-                src="/news02.png"
+                src="/news05.png"
                 alt="News"
                 className="h-full w-full object-cover"
               />
@@ -236,14 +236,14 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-                Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos
+               Nathaniel Idowu Summer Camp 1.0 Kicks Off As 321 Children Begin Month-Long Sports Development Programme
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">May 28 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-                Captivating prices to be won by participants.
+                New talents to behold
               </p>
               <a
-                href="https://mediatoday.ng/nathaniel-idowu-foundation-to-host-maiden-summer-camp-for-young-athletes-in-lagos/"
+                href="https://www.facebook.com/share/p/1DqWf1DBn4/"
                 className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
               >
                 <span>Read More</span>

@@ -17,9 +17,33 @@ import {
 } from "@/lib/api/registration";
 export default function RegistrationPayment() {
   const router = useRouter();
+  // Grab accumulated form data from previous steps (local fallback)
+  // If you have a useRegistrationForm hook, replace this with that hook.
+  const [formData, setFormData] = useState<any>({
+    contact_name: "",
+    contact_phone: "",
+    contact_email: "",
+    academy_name: "",
+    coach_full_name: "",
+    coach_dob: "",
+    coach_nationality: "",
+    team_logo: null,
+    players: [],
+  });
 
-  // Grab accumulated form data from previous steps
-  // const { formData, resetForm } = useRegistrationForm();
+  const resetForm = () => {
+    setFormData({
+      contact_name: "",
+      contact_phone: "",
+      contact_email: "",
+      academy_name: "",
+      coach_full_name: "",
+      coach_dob: "",
+      coach_nationality: "",
+      team_logo: null,
+      players: [],
+    });
+  };
 
   const [copied, setCopied] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
