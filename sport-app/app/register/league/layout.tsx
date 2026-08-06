@@ -30,19 +30,25 @@ export default function LeagueLayout({
     id: crypto.randomUUID(),
     name: "",
     contactNumber: "",
+    contactPhone: "",
     email: "",
+    contactEmail: "",
     academyName: "",
     logo: null,
+    teamLogo: undefined,
   });
+
   const [headCoach, setHeadCoach] = useState<HeadCoach>({
     id: crypto.randomUUID(),
     passport: null,
     fullName: "",
     dateOfBirth: "",
+    dob: "",
     nationality: "",
   });
+
   const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 18 }, () => createEmptyPlayer()),
+    Array.from({ length: 18 }, () => createEmptyPlayer())
   );
 
   return (
