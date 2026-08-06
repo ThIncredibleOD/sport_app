@@ -33,6 +33,9 @@ export default function SecondaryCupLayout({
     email: "",
     academyName: "",
     logo: null,
+    teamLogo: undefined,
+    contactEmail: "",
+    contactPhone: "",
   });
   const [headCoach, setHeadCoach] = useState<HeadCoach>({
     id: crypto.randomUUID(),
@@ -40,6 +43,7 @@ export default function SecondaryCupLayout({
     fullName: "",
     dateOfBirth: "",
     nationality: "",
+    dob: "",
   });
   const [players, setPlayers] = useState<Player[]>(
     Array.from({ length: 18 }, () => createEmptyPlayer()),
