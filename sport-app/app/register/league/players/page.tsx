@@ -60,6 +60,7 @@ export default function PlayerRegistration() {
         const updated = [...prev];
         updated[currentIndex] = {
           ...updated[currentIndex],
+          passport: file,
           passportPreview: previewUrl,
         };
         return updated;
@@ -106,6 +107,7 @@ export default function PlayerRegistration() {
         dob: player.dateOfBirth,
         nationality: player.nationality,
         position: player.position,
+        photo: player.passport,
         consent_form: player.consentForm as File,
         proof_of_age: player.proofOfAge as File,
       })),

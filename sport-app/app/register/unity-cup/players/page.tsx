@@ -20,6 +20,7 @@ interface Player {
   nationality: string;
   jerseyNumber: string;
   position: string;
+  passport: File | null;
   passportPreview: string | null;
   consentForm: File | null;
   proofOfAge: File | null;
@@ -32,6 +33,7 @@ const createEmptyPlayer = (): Player => ({
   nationality: "",
   jerseyNumber: "",
   position: "",
+  passport: null,
   passportPreview: null,
   consentForm: null,
   proofOfAge: null,
@@ -84,6 +86,7 @@ export default function PlayerRegistration() {
         const updated = [...prev];
         updated[currentIndex] = {
           ...updated[currentIndex],
+          passport: file,
           passportPreview: previewUrl,
         };
         return updated;

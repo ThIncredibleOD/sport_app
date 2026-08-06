@@ -135,6 +135,7 @@ export function useRegister() {
       dob: p.dateOfBirth,
       nationality: p.nationality,
       position: p.position,
+      photo: p.passport,
       consent_form: p.consentForm as File,
       proof_of_age: p.proofOfAge as File,
     })),
