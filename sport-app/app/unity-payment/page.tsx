@@ -4,37 +4,14 @@ export const dynamic = 'force-dynamic';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Copy, Check, Upload, AlertTriangle, Loader2 } from 'lucide-react';
-import { submitRegistration, uploadPaymentReceipt } from '@/lib/api/registration'; 
+import { submitRegistration, uploadPaymentReceipt } from '@/lib/api/registration';
+import { useRegister } from '@/context/sportContext';
 
 export default function RegistrationPayment() {
   const router = useRouter();
-  
-  // Access state saved from previous steps (local fallback)
-  const [formData, setFormData] = useState<any>({
-    contact_name: "",
-    contact_phone: "",
-    contact_email: "",
-    academy_name: "",
-    coach_full_name: "",
-    coach_dob: "",
-    coach_nationality: "",
-    team_logo: null,
-    players: [],
-  });
 
-  const resetForm = () => {
-    setFormData({
-      contact_name: "",
-      contact_phone: "",
-      contact_email: "",
-      academy_name: "",
-      coach_full_name: "",
-      coach_dob: "",
-      coach_nationality: "",
-      team_logo: null,
-      players: [],
-    });
-  };
+  // Access state saved from previous steps
+  const { formData, resetForm } = useRegister();
 
   const [copied, setCopied] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);

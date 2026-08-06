@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import { SportProvider } from "@/context/sportContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +31,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <div className="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
-          <Navbar />
+        <SportProvider>
+          <div className="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+            <Navbar />
 
-          {children}
-        </div>
+            {children}
+          </div>
+        </SportProvider>
       </body>
     </html>
   );
