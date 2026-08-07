@@ -10,45 +10,21 @@ import {
   Plus,
   Upload,
   AlertTriangle,
-  RotateCcw,
 } from "lucide-react";
+import { useRegister, createEmptyPlayer } from "@/context/sportContext";
 
-interface Player {
-  playerFullName: string;
-  dateOfBirth: string;
-  StateOfOrigin: string;
-  nationality: string;
-  jerseyNumber: string;
-  position: string;
-  passport: File | null;
-  passportPreview: string | null;
-  consentForm: File | null;
-  proofOfAge: File | null;
-}
-
-const createEmptyPlayer = (): Player => ({
-  playerFullName: "",
-  dateOfBirth: "",
-  StateOfOrigin: "",
-  nationality: "",
-  jerseyNumber: "",
-  position: "",
-  passport: null,
-  passportPreview: null,
-  consentForm: null,
-  proofOfAge: null,
-});
+const BACK_ROUTE = "/register/unity-cup/academy-squad";
+const REVIEW_ROUTE = "/register/unity-cup/review";
+const LOGO_SRC = "/unity.png";
+const LOGO_ALT = "The Nathaniel Idowu Unity Football League";
 
 export default function PlayerRegistration() {
+  const { players, setPlayers } = useRegister();
   const router = useRouter();
 
-  // Array of 18 player objects
-  const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 20 }, () => createEmptyPlayer()),
-  );
-
-  // Track active player index (0 to 19)
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const total = players.length;
+  const isLast = currentIndex === total - 1;
   const currentPlayer = players[currentIndex];
 
   const handlePrevPlayer = () => {
@@ -56,7 +32,7 @@ export default function PlayerRegistration() {
   };
 
   const handleNextPlayer = () => {
-    if (currentIndex < players.length - 1) setCurrentIndex((prev) => prev + 1);
+    if (currentIndex < total - 1) setCurrentIndex((prev) => prev + 1);
   };
 
   const handleClearPlayer = () => {
@@ -108,25 +84,26 @@ export default function PlayerRegistration() {
     }
   };
 
-  const handleAddPlayerSubmit = (e: React.FormEvent) => {
+  // Advance through the carousel; on the last player, move on to the review
+  // screen (data persists in context — nothing is submitted here).
+  const handleAddPlayerSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentIndex < 19) {
+    if (!isLast) {
       setCurrentIndex((prev) => prev + 1);
+    } else {
+      router.push(REVIEW_ROUTE);
     }
-  };
-
-  const handleNextSection = () => {
-    console.log("All 20 players registered:", players);
-    router.push("/unity-complete");
   };
 
   const handleBottomBack = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
     } else {
-      router.push("/unity-registration");
+      router.push(BACK_ROUTE);
     }
   };
+
+  if (!currentPlayer) return null;
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
@@ -141,7 +118,7 @@ export default function PlayerRegistration() {
         <div className="w-full flex justify-start relative z-10 mb-2">
           <button
             type="button"
-            onClick={() => router.push("/unity-registration")}
+            onClick={() => router.push(BACK_ROUTE)}
             className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -151,15 +128,15 @@ export default function PlayerRegistration() {
 
         {/* Logo Banner & Number Indicator */}
         <div className="flex flex-col items-center relative z-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/unity.png"
-            alt="The Nathaniel Idowu Unity Football League"
+            src={LOGO_SRC}
+            alt={LOGO_ALT}
             className="h-20 w-auto object-contain mb-1"
           />
 
-          {/* PLAYER PAGE NUMBER BADGE (1-20) */}
           <span className="inline-flex items-center rounded-full bg-white/20 border border-[#16a34a]/40 px-3 py-0.5 text-xs font-semibold text-slate-400">
-            Player {currentIndex + 1} of 20
+            Player {currentIndex + 1} of {total}
           </span>
         </div>
 
@@ -182,9 +159,9 @@ export default function PlayerRegistration() {
             <button
               type="button"
               onClick={handleNextPlayer}
-              disabled={currentIndex === 19}
+              disabled={isLast}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 bg-slate-950/40 text-slate-300 transition-all ${
-                currentIndex === 19
+                isLast
                   ? "opacity-40 cursor-not-allowed"
                   : "hover:bg-slate-950/70 hover:text-white"
               }`}
@@ -212,6 +189,7 @@ export default function PlayerRegistration() {
           <div className="flex flex-col items-center justify-center gap-2 py-1">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] transition-all overflow-hidden group">
               {currentPlayer.passportPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={currentPlayer.passportPreview}
                   alt="Passport Preview"
@@ -237,8 +215,8 @@ export default function PlayerRegistration() {
             </label>
             <input
               type="text"
-              name="playerFullName"
-              value={currentPlayer.playerFullName}
+              name="fullName"
+              value={currentPlayer.fullName}
               onChange={handleChange}
               placeholder="e.g. John Doe"
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none transition-all"
@@ -266,7 +244,7 @@ export default function PlayerRegistration() {
             </label>
             <input
               type="text"
-              name="Nationality"
+              name="nationality"
               value={currentPlayer.nationality}
               onChange={handleChange}
               placeholder="e.g. Nigerian"
@@ -274,7 +252,7 @@ export default function PlayerRegistration() {
             />
           </div>
 
-          {/*  Jersey No. (1 - 99) */}
+          {/* Jersey No. (1 - 99) */}
           <div>
             <label className="block text-xs font-medium text-slate-200 mb-1">
               Jersey No.
@@ -327,7 +305,7 @@ export default function PlayerRegistration() {
           <div className="space-y-2 pt-1">
             <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
               <Upload className="h-3.5 w-3.5" />
-              <span>
+              <span className="truncate max-w-[220px]">
                 {currentPlayer.consentForm
                   ? currentPlayer.consentForm.name
                   : "Upload Consent Form"}
@@ -342,7 +320,7 @@ export default function PlayerRegistration() {
 
             <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
               <Upload className="h-3.5 w-3.5" />
-              <span>
+              <span className="truncate max-w-[220px]">
                 {currentPlayer.proofOfAge
                   ? currentPlayer.proofOfAge.name
                   : "Upload Proof Of Age"}
@@ -359,16 +337,15 @@ export default function PlayerRegistration() {
           {/* Action Buttons */}
           <div className="pt-3 space-y-2">
             <button
-              type={currentIndex === 19 ? "button" : "submit"}
-              onClick={currentIndex === 19 ? handleNextSection : undefined}
+              type="submit"
               className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2.5 px-4 text-xs font-semibold text-white hover:bg-[#15803d] transition-all shadow-lg shadow-emerald-950/50"
             >
-              {currentIndex === 19 ? (
+              {isLast ? (
                 <ChevronRight className="h-4 w-4" />
               ) : (
                 <Plus className="h-3.5 w-3.5" />
               )}
-              <span>{currentIndex === 19 ? "Next" : "Add Player"}</span>
+              <span>{isLast ? "Review Registration" : "Add Player"}</span>
             </button>
 
             <button
@@ -376,7 +353,7 @@ export default function PlayerRegistration() {
               onClick={handleBottomBack}
               className="flex w-full items-center justify-center gap-1.5 rounded-md border border-white/15 bg-slate-950/60 py-2 px-4 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-all"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back</span>
             </button>
           </div>

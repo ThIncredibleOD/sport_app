@@ -5,23 +5,13 @@ import {
   HeadCoach,
   Player,
   SportContext,
+  createEmptyPlayer,
 } from "@/context/sportContext";
 import { useState } from "react";
 
-export const createEmptyPlayer = (): Player => ({
-  id: crypto.randomUUID(),
-  passport: null,
-  fullName: "",
-  dateOfBirth: "",
-  nationality: "",
-  jerseyNumber: "",
-  position: "",
-  consentForm: null,
-  proofOfAge: null,
-  passportPreview: null,
-});
+const PLAYER_COUNT = 20;
 
-export default function LeagueLayout({
+export default function UnityCupLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -46,7 +36,7 @@ export default function LeagueLayout({
     dob: "",
   });
   const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 5 }, () => createEmptyPlayer()),
+    Array.from({ length: PLAYER_COUNT }, () => createEmptyPlayer()),
   );
 
   return (

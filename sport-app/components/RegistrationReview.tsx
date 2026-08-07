@@ -1,0 +1,316 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  CreditCard,
+  Building2,
+  Phone,
+  Mail,
+  User,
+  Users,
+  Calendar,
+  Flag,
+  Shirt,
+  MapPin,
+  AlertTriangle,
+  CheckCircle2,
+  FileText,
+} from "lucide-react";
+import { useRegister } from "@/context/sportContext";
+
+type Props = {
+  /** Tournament logo shown in the header, e.g. "/under1.png". */
+  logoSrc: string;
+  logoAlt: string;
+  /** Human-readable tournament name. */
+  tournamentName: string;
+  /** Where "Go Back to Edit" returns to (the players carousel). */
+  editRoute: string;
+  /** Where "Proceed to Payment" advances to (must stay inside this flow's provider). */
+  paymentRoute: string;
+};
+
+/** Small helper: derive a temporary object URL for a File, cleaning it up on change/unmount. */
+function useObjectUrl(file: File | null): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file) {
+      setUrl(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+  return url;
+}
+
+function Detail({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | null | undefined;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#16a34a]" />
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-wide text-slate-400">
+          {label}
+        </p>
+        <p className="text-xs text-white break-words">
+          {value && value.trim() ? value : "—"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function RegistrationReview({
+  logoSrc,
+  logoAlt,
+  tournamentName,
+  editRoute,
+  paymentRoute,
+}: Props) {
+  const { academyProfile, headCoach, players } = useRegister();
+  const router = useRouter();
+
+  const logoUrl = useObjectUrl(academyProfile.logo);
+  const coachUrl = useObjectUrl(headCoach.passport);
+
+  const filledCount = players.filter((p) => p.fullName.trim()).length;
+
+  return (
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
+        style={{ backgroundImage: `url('/hero.png')` }}
+      />
+      <div className="absolute inset-0 bg-slate-950/50" />
+
+      <div className="relative z-10 w-full max-w-3xl mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
+        {/* Top Back Link */}
+        <div className="w-full flex justify-start mb-2">
+          <button
+            type="button"
+            onClick={() => router.push(editRoute)}
+            className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to Players</span>
+          </button>
+        </div>
+
+        {/* Header */}
+        <div className="flex flex-col items-center text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoSrc}
+            alt={logoAlt}
+            className="h-20 w-auto object-contain"
+          />
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white uppercase">
+            Review Your Registration
+          </h1>
+          <p className="mt-1 text-xs text-slate-400 max-w-md leading-relaxed">
+            {tournamentName}. Please confirm every detail below is correct.{" "}
+            <span className="text-amber-400">
+              Once your payment is approved, changes are no longer possible.
+            </span>
+          </p>
+        </div>
+
+        {/* Academy Profile */}
+        <section className="mt-6 rounded-xl border border-white/15 bg-slate-950/40 p-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+            <Building2 className="h-4 w-4 text-[#16a34a]" />
+            Academy Profile
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-slate-950/60">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoUrl}
+                    alt="Team logo"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Building2 className="h-7 w-7 text-slate-500" />
+                )}
+              </div>
+              <span className="text-[10px] text-slate-400">Team Logo</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+              <Detail icon={Building2} label="Academy Name" value={academyProfile.academyName} />
+              <Detail icon={User} label="Contact Name" value={academyProfile.name} />
+              <Detail icon={Phone} label="Contact Number" value={academyProfile.contactNumber} />
+              <Detail icon={Mail} label="Email" value={academyProfile.email} />
+            </div>
+          </div>
+        </section>
+
+        {/* Head Coach */}
+        <section className="mt-4 rounded-xl border border-white/15 bg-slate-950/40 p-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+            <User className="h-4 w-4 text-[#16a34a]" />
+            Head Coach
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-slate-950/60">
+                {coachUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={coachUrl}
+                    alt="Coach passport"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-7 w-7 text-slate-500" />
+                )}
+              </div>
+              <span className="text-[10px] text-slate-400">Passport</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+              <Detail icon={User} label="Full Name" value={headCoach.fullName} />
+              <Detail icon={Calendar} label="Date of Birth" value={headCoach.dateOfBirth} />
+              <Detail icon={Flag} label="Nationality" value={headCoach.nationality} />
+            </div>
+          </div>
+        </section>
+
+        {/* Players */}
+        <section className="mt-4 rounded-xl border border-white/15 bg-slate-950/40 p-4">
+          <h2 className="flex items-center justify-between text-sm font-semibold text-white mb-3">
+            <span className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-[#16a34a]" />
+              Players
+            </span>
+            <span className="text-[11px] font-medium text-slate-400">
+              {filledCount} of {players.length} entered
+            </span>
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {players.map((player, index) => {
+              const isFilled = player.fullName.trim().length > 0;
+              return (
+                <div
+                  key={player.id}
+                  className={`flex items-center gap-3 rounded-lg border p-2.5 transition-colors ${
+                    isFilled
+                      ? "border-white/15 bg-slate-950/50"
+                      : "border-dashed border-white/10 bg-slate-950/20"
+                  }`}
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/15 bg-slate-950/60">
+                    {player.passportPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={player.passportPreview}
+                        alt={`Player ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-5 w-5 text-slate-600" />
+                    )}
+                  </div>
+
+                  {isFilled ? (
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-white">
+                        {player.fullName}
+                      </p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-slate-400">
+                        <span className="inline-flex items-center gap-1">
+                          <Shirt className="h-3 w-3" />
+                          {player.jerseyNumber || "—"}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {player.position || "—"}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Flag className="h-3 w-3" />
+                          {player.nationality || "—"}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {player.dateOfBirth || "—"}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-[10px]">
+                        <span
+                          className={`inline-flex items-center gap-1 ${
+                            player.consentForm ? "text-[#16a34a]" : "text-slate-500"
+                          }`}
+                        >
+                          <FileText className="h-3 w-3" />
+                          Consent
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 ${
+                            player.proofOfAge ? "text-[#16a34a]" : "text-slate-500"
+                          }`}
+                        >
+                          <FileText className="h-3 w-3" />
+                          Age proof
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-slate-500">
+                        Player {index + 1}
+                      </p>
+                      <p className="text-[10px] text-slate-600">Not entered</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Notice */}
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-[11px] text-amber-300">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>
+            Nothing is submitted yet. Your details are saved on this device only.
+            They are sent for approval after you upload your payment receipt on
+            the next step.
+          </span>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-5 flex flex-col sm:flex-row gap-2.5">
+          <button
+            type="button"
+            onClick={() => router.push(editRoute)}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-white/15 bg-slate-950/60 py-2.5 px-4 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-all"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Go Back to Edit</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push(paymentRoute)}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2.5 px-4 text-xs font-semibold text-white hover:bg-[#15803d] transition-all shadow-lg shadow-emerald-950/50"
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Proceed to Payment</span>
+            <CreditCard className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

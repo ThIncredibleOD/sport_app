@@ -30,13 +30,29 @@ export type Player = {
   dateOfBirth: string;
   nationality: string;
   jerseyNumber: string;
-  position: PlayerPosition;
+  position: string;
   consentForm: File | null;
   proofOfAge: File | null;
   passportPreview: string | null;
 };
 
-type PlayerPosition = "GOALKEEPER" | "DEFENDER" | "MIDFIELDER" | "FORWARD" | "";
+/**
+ * Single source of truth for a blank player row. Every flow (league, unity,
+ * secondary) seeds its carousel from this, so field names stay consistent
+ * across the whole registration/review/PDF pipeline.
+ */
+export const createEmptyPlayer = (): Player => ({
+  id: crypto.randomUUID(),
+  passport: null,
+  fullName: "",
+  dateOfBirth: "",
+  nationality: "",
+  jerseyNumber: "",
+  position: "",
+  consentForm: null,
+  proofOfAge: null,
+  passportPreview: null,
+});
 
 type RegisterContextType = {
   academyProfile: AcademyProfile;

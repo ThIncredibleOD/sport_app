@@ -10,19 +10,21 @@ import {
   Plus,
   Upload,
   AlertTriangle,
-  RotateCcw,
 } from "lucide-react";
-import { useRegister } from "@/context/sportContext";
-import { createEmptyPlayer } from "../layout";
-import Image from "next/image";
-import { submitRegistration } from "@/lib/api/registration";
+import { useRegister, createEmptyPlayer } from "@/context/sportContext";
+
+const BACK_ROUTE = "/register/league/academy-squad";
+const REVIEW_ROUTE = "/register/league/review";
+const LOGO_SRC = "/under1.png";
+const LOGO_ALT = "The Nathaniel Idowu Under 16 Football League";
 
 export default function PlayerRegistration() {
-  const { academyProfile, headCoach, players, setPlayers } = useRegister();
+  const { players, setPlayers } = useRegister();
   const router = useRouter();
 
-  // Track active player index (0 to 17)
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const total = players.length;
+  const isLast = currentIndex === total - 1;
   const currentPlayer = players[currentIndex];
 
   const handlePrevPlayer = () => {
@@ -30,7 +32,7 @@ export default function PlayerRegistration() {
   };
 
   const handleNextPlayer = () => {
-    if (currentIndex < players.length - 1) setCurrentIndex((prev) => prev + 1);
+    if (currentIndex < total - 1) setCurrentIndex((prev) => prev + 1);
   };
 
   const handleClearPlayer = () => {
@@ -82,56 +84,26 @@ export default function PlayerRegistration() {
     }
   };
 
-  const handleAddPlayerSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  // Advance through the carousel; on the last player, move on to the review
+  // screen (data persists in context — nothing is submitted here).
+  const handleAddPlayerSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentIndex < 17) {
+    if (!isLast) {
       setCurrentIndex((prev) => prev + 1);
+    } else {
+      router.push(REVIEW_ROUTE);
     }
-  };
-
-  const handleSubmissionSupabase = async () => {
-    const submission = await submitRegistration({
-      tournament_slug: "u16-league",
-      contact_name: academyProfile.name,
-      contact_phone: academyProfile.contactNumber,
-      contact_email: academyProfile.email,
-      academy_name: academyProfile.academyName,
-
-      coach_full_name: headCoach.fullName,
-      coach_dob: headCoach.dateOfBirth,
-      coach_nationality: headCoach.nationality,
-      team_logo: academyProfile.logo as File,
-
-      players: players.map((player) => ({
-        full_name: player.fullName,
-        dob: player.dateOfBirth,
-        nationality: player.nationality,
-        position: player.position,
-        photo: player.passport,
-        consent_form: player.consentForm as File,
-        proof_of_age: player.proofOfAge as File,
-      })),
-    });
-
-    return submission;
-  };
-
-  const handleNextSection = async () => {
-    console.log("All 18 players registered:", players);
-    router.push("/complete-u");
-
-    // const data = await handleSubmissionSupabase();
-
-    // console.log(data);
   };
 
   const handleBottomBack = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
     } else {
-      router.push("/register/league/academy-squad");
+      router.push(BACK_ROUTE);
     }
   };
+
+  if (!currentPlayer) return null;
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
@@ -146,7 +118,7 @@ export default function PlayerRegistration() {
         <div className="w-full flex justify-start relative z-10 mb-2">
           <button
             type="button"
-            onClick={() => router.push("/register/league/academy-squad")}
+            onClick={() => router.push(BACK_ROUTE)}
             className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -156,17 +128,15 @@ export default function PlayerRegistration() {
 
         {/* Logo Banner & Number Indicator */}
         <div className="flex flex-col items-center relative z-10">
-          <Image
-            src="/under1.png"
-            height="800"
-            width="1200"
-            alt="The Nathaniel Idowu Under 16 Football League"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={LOGO_SRC}
+            alt={LOGO_ALT}
             className="h-20 w-auto object-contain"
           />
 
-          {/* PLAYER PAGE NUMBER BADGE (1-18) */}
           <span className="inline-flex items-center rounded-full bg-white/20 border border-[#16a34a]/40 px-3 py-0.5 text-xs font-semibold text-slate-400">
-            Player {currentIndex + 1} of 18
+            Player {currentIndex + 1} of {total}
           </span>
         </div>
 
@@ -189,9 +159,9 @@ export default function PlayerRegistration() {
             <button
               type="button"
               onClick={handleNextPlayer}
-              disabled={currentIndex === 17}
+              disabled={isLast}
               className={`flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 bg-slate-950/40 text-slate-300 transition-all ${
-                currentIndex === 17
+                isLast
                   ? "opacity-40 cursor-not-allowed"
                   : "hover:bg-slate-950/70 hover:text-white"
               }`}
@@ -219,11 +189,10 @@ export default function PlayerRegistration() {
           <div className="flex flex-col items-center justify-center gap-2 py-1">
             <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] transition-all overflow-hidden group">
               {currentPlayer.passportPreview ? (
-                <Image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   src={currentPlayer.passportPreview}
-                  height="800"
-                  width="1600"
-                  alt="Logo Preview"
+                  alt="Passport Preview"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -283,7 +252,7 @@ export default function PlayerRegistration() {
             />
           </div>
 
-          {/*  Jersey No. (1 - 99) */}
+          {/* Jersey No. (1 - 99) */}
           <div>
             <label className="block text-xs font-medium text-slate-200 mb-1">
               Jersey No.
@@ -336,7 +305,7 @@ export default function PlayerRegistration() {
           <div className="space-y-2 pt-1">
             <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
               <Upload className="h-3.5 w-3.5" />
-              <span>
+              <span className="truncate max-w-[220px]">
                 {currentPlayer.consentForm
                   ? currentPlayer.consentForm.name
                   : "Upload Consent Form"}
@@ -351,7 +320,7 @@ export default function PlayerRegistration() {
 
             <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
               <Upload className="h-3.5 w-3.5" />
-              <span>
+              <span className="truncate max-w-[220px]">
                 {currentPlayer.proofOfAge
                   ? currentPlayer.proofOfAge.name
                   : "Upload Proof Of Age"}
@@ -368,16 +337,15 @@ export default function PlayerRegistration() {
           {/* Action Buttons */}
           <div className="pt-3 space-y-2">
             <button
-              type={currentIndex === 17 ? "button" : "submit"}
-              onClick={currentIndex === 4 ? handleNextSection : undefined}
+              type="submit"
               className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2.5 px-4 text-xs font-semibold text-white hover:bg-[#15803d] transition-all shadow-lg shadow-emerald-950/50"
             >
-              {currentIndex === 4 ? (
+              {isLast ? (
                 <ChevronRight className="h-4 w-4" />
               ) : (
                 <Plus className="h-3.5 w-3.5" />
               )}
-              <span>{currentIndex === 17 ? "Next" : "Add Player"}</span>
+              <span>{isLast ? "Review Registration" : "Add Player"}</span>
             </button>
 
             <button
@@ -385,7 +353,7 @@ export default function PlayerRegistration() {
               onClick={handleBottomBack}
               className="flex w-full items-center justify-center gap-1.5 rounded-md border border-white/15 bg-slate-950/60 py-2 px-4 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-all"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back</span>
             </button>
           </div>

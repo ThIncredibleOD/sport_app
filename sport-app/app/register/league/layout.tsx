@@ -5,21 +5,11 @@ import {
   HeadCoach,
   Player,
   SportContext,
+  createEmptyPlayer,
 } from "@/context/sportContext";
 import { useState } from "react";
 
-export const createEmptyPlayer = (): Player => ({
-  id: crypto.randomUUID(),
-  passport: null,
-  fullName: "",
-  dateOfBirth: "",
-  nationality: "",
-  jerseyNumber: "",
-  position: "",
-  consentForm: null,
-  proofOfAge: null,
-  passportPreview: null,
-});
+const PLAYER_COUNT = 18;
 
 export default function LeagueLayout({
   children,
@@ -30,25 +20,23 @@ export default function LeagueLayout({
     id: crypto.randomUUID(),
     name: "",
     contactNumber: "",
-    contactPhone: "",
     email: "",
-    contactEmail: "",
     academyName: "",
     logo: null,
     teamLogo: undefined,
+    contactEmail: "",
+    contactPhone: "",
   });
-
   const [headCoach, setHeadCoach] = useState<HeadCoach>({
     id: crypto.randomUUID(),
     passport: null,
     fullName: "",
     dateOfBirth: "",
-    dob: "",
     nationality: "",
+    dob: "",
   });
-
   const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 18 }, () => createEmptyPlayer())
+    Array.from({ length: PLAYER_COUNT }, () => createEmptyPlayer()),
   );
 
   return (

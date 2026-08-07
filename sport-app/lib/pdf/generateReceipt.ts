@@ -1,0 +1,270 @@
+"use client";
+
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
+/* -------------------------------------------------------------------------- */
+/*  Types                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export interface ReceiptPlayer {
+  full_name: string;
+  dob: string;
+  nationality: string;
+  jersey_number?: string;
+  position: string;
+  /** In-memory passport photo. Compressed to a small thumbnail for the PDF. */
+  photo?: File | null;
+}
+
+export interface ReceiptData {
+  tournamentName: string;
+  academyName: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  /** In-memory team logo. Compressed and embedded in the header. */
+  teamLogo?: File | null;
+  coachName: string;
+  coachDob: string;
+  coachNationality: string;
+  players: ReceiptPlayer[];
+  /** Pre-formatted submission timestamp label (caller controls formatting). */
+  submittedAtLabel: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Image helpers — resize + JPEG-compress in a canvas to keep the PDF small   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Load a File into an <img>, draw it "cover"-fitted onto a square canvas of
+ * `size` px, and return a compressed JPEG data URL. Returns null if the file
+ * can't be decoded (so the PDF still generates without that image).
+ */
+function fileToSquareJpeg(
+  file: File,
+  size: number,
+  quality: number,
+): Promise<string | null> {
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+
+        // White backdrop so transparent PNGs don't turn black in JPEG.
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, size, size);
+
+        // "cover" fit — scale to fill the square, center-crop the overflow.
+        const scale = Math.max(size / img.width, size / img.height);
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        const dx = (size - drawW) / 2;
+        const dy = (size - drawH) / 2;
+        ctx.drawImage(img, dx, dy, drawW, drawH);
+
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      } catch {
+        resolve(null);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(null);
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/*  PDF generation                                                             */
+/* -------------------------------------------------------------------------- */
+
+const GREEN: [number, number, number] = [22, 163, 74]; // #16a34a
+const SLATE: [number, number, number] = [51, 65, 85]; // slate-700
+const MUTED: [number, number, number] = [148, 163, 184]; // slate-400
+
+/**
+ * Build a compact A4 registration receipt PDF (roster + academy/coach details)
+ * entirely in the browser, and return it as a Blob.
+ *
+ * Size budget: player photos are 44px JPEG thumbnails at ~0.7 quality and the
+ * logo is a 90px thumbnail, so even a 20-player roster lands well under 800KB.
+ */
+export async function generateRegistrationReceipt(
+  data: ReceiptData,
+): Promise<Blob> {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginX = 14;
+  let y = 16;
+
+  // Pre-compress all images up front (parallel).
+  const [logoThumb, playerThumbs] = await Promise.all([
+    data.teamLogo ? fileToSquareJpeg(data.teamLogo, 90, 0.7) : Promise.resolve(null),
+    Promise.all(
+      data.players.map((p) =>
+        p.photo ? fileToSquareJpeg(p.photo, 44, 0.7) : Promise.resolve(null),
+      ),
+    ),
+  ]);
+
+  /* ----------------------------- Header ---------------------------------- */
+  if (logoThumb) {
+    doc.addImage(logoThumb, "JPEG", marginX, y, 18, 18);
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.setTextColor(...SLATE);
+  doc.text("Registration Receipt", logoThumb ? marginX + 22 : marginX, y + 7);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  doc.text(data.tournamentName, logoThumb ? marginX + 22 : marginX, y + 13);
+
+  // Status pill (right-aligned)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...GREEN);
+  doc.text("PAYMENT: PENDING VERIFICATION", pageWidth - marginX, y + 5, {
+    align: "right",
+  });
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...MUTED);
+  doc.text(`Submitted: ${data.submittedAtLabel}`, pageWidth - marginX, y + 10, {
+    align: "right",
+  });
+
+  y += 24;
+  doc.setDrawColor(...GREEN);
+  doc.setLineWidth(0.5);
+  doc.line(marginX, y, pageWidth - marginX, y);
+  y += 8;
+
+  /* --------------------------- Academy block ----------------------------- */
+  const col2 = pageWidth / 2 + 4;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...SLATE);
+  doc.text("Academy", marginX, y);
+  doc.text("Head Coach", col2, y);
+  y += 5;
+
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...SLATE);
+
+  const academyLines = [
+    `Name: ${data.academyName || "-"}`,
+    `Contact: ${data.contactName || "-"}`,
+    `Phone: ${data.contactPhone || "-"}`,
+    `Email: ${data.contactEmail || "-"}`,
+  ];
+  const coachLines = [
+    `Name: ${data.coachName || "-"}`,
+    `DOB: ${data.coachDob || "-"}`,
+    `Nationality: ${data.coachNationality || "-"}`,
+  ];
+
+  const blockStartY = y;
+  academyLines.forEach((line, i) => {
+    doc.text(line, marginX, blockStartY + i * 5);
+  });
+  coachLines.forEach((line, i) => {
+    doc.text(line, col2, blockStartY + i * 5);
+  });
+
+  y = blockStartY + Math.max(academyLines.length, coachLines.length) * 5 + 4;
+
+  /* ----------------------------- Roster ---------------------------------- */
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...SLATE);
+  const filledCount = data.players.filter((p) => p.full_name.trim()).length;
+  doc.text(`Players (${filledCount})`, marginX, y);
+  y += 3;
+
+  autoTable(doc, {
+    startY: y,
+    head: [["#", "Photo", "Full Name", "DOB", "Nationality", "Jersey", "Position"]],
+    body: data.players.map((p, i) => [
+      String(i + 1),
+      "", // photo drawn in didDrawCell
+      p.full_name || "-",
+      p.dob || "-",
+      p.nationality || "-",
+      p.jersey_number || "-",
+      p.position || "-",
+    ]),
+    theme: "grid",
+    headStyles: {
+      fillColor: GREEN,
+      textColor: [255, 255, 255],
+      fontSize: 8,
+      halign: "left",
+    },
+    styles: {
+      fontSize: 8,
+      cellPadding: 1.6,
+      minCellHeight: 13,
+      valign: "middle",
+      textColor: SLATE,
+    },
+    columnStyles: {
+      0: { cellWidth: 8, halign: "center" },
+      1: { cellWidth: 15, halign: "center" },
+      5: { cellWidth: 14, halign: "center" },
+    },
+    margin: { left: marginX, right: marginX },
+    didDrawCell: (cell) => {
+      if (cell.section === "body" && cell.column.index === 1) {
+        const thumb = playerThumbs[cell.row.index];
+        if (thumb) {
+          const s = 10;
+          const px = cell.cell.x + (cell.cell.width - s) / 2;
+          const py = cell.cell.y + (cell.cell.height - s) / 2;
+          doc.addImage(thumb, "JPEG", px, py, s, s);
+        }
+      }
+    },
+  });
+
+  /* ----------------------------- Footer ---------------------------------- */
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    doc.text(
+      "This receipt confirms your submission is pending manual payment verification. Keep it for your records.",
+      marginX,
+      doc.internal.pageSize.getHeight() - 8,
+    );
+    doc.text(
+      `Page ${i} of ${pageCount}`,
+      pageWidth - marginX,
+      doc.internal.pageSize.getHeight() - 8,
+      { align: "right" },
+    );
+  }
+
+  return doc.output("blob");
+}

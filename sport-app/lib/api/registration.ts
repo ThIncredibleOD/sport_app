@@ -5,6 +5,7 @@ export interface PlayerInput {
   dob: string;
   nationality: string;
   position: string;
+  jersey_number?: string;
   photo?: File | null; // Player picture — PUBLIC (meant to be shown on squad pages)
   consent_form: File; // PRIVATE (minor's document)
   proof_of_age: File; // PRIVATE (minor's document)
@@ -21,6 +22,24 @@ export interface RegistrationInput {
   coach_nationality: string;
   team_logo?: File | null; // PUBLIC (meant to be shown)
   players: PlayerInput[];
+  /**
+   * Payment receipt uploaded by the registrant — PRIVATE. When present, the
+   * whole registration is submitted in one shot with status
+   * "pending_verification" (the single-submit-at-receipt flow). When absent,
+   * nothing about payment is recorded and the status stays "pending_upload".
+   */
+  receipt_file?: File | null;
+  /**
+   * Pre-rendered roster receipt PDF (generated client-side from the in-memory
+   * File objects). Stored in a PUBLIC bucket so the registrant can download it
+   * from the confirmation page. Optional.
+   */
+  receipt_pdf_blob?: Blob | null;
+}
+
+export interface SubmitRegistrationResult {
+  id: string;
+  receipt_pdf_url: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -91,22 +110,25 @@ function validateFile(
 
   if (!typeOk || !extOk) {
     throw new Error(
-      `${label} must be ${kind === "image" ? "an image (JP, PNG, WEBP)" : "a PDF or image"}.`,
+      `${label} must be ${kind === "image" ? "an image (JPG, PNG, WEBP)" : "a PDF or image"}.`,
     );
   }
 }
 
 /**
- * Upload a validated file and return its storage PATH (not a URL).
- * Use getPublicUrl (public buckets) or getSignedUrl (private buckets) to read.
+ * Upload a validated file/blob and return its storage PATH (not a URL).
+ * Use publicUrl (public buckets) or getSignedUrl (private buckets) to read.
  */
 async function uploadToBucket(
   bucket: string,
   path: string,
-  file: File,
+  body: File | Blob,
+  contentType?: string,
 ): Promise<string> {
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    contentType: file.type || undefined,
+  const resolvedType =
+    contentType ?? (body instanceof File ? body.type : undefined) ?? undefined;
+  const { error } = await supabase.storage.from(bucket).upload(path, body, {
+    contentType: resolvedType,
     upsert: false,
   });
   if (error) throw error;
@@ -134,12 +156,41 @@ export async function getSignedUrl(
   return data.signedUrl;
 }
 
+/**
+ * Cryptographically-random registration id, generated on the client.
+ *
+ * We deliberately create the primary key here instead of letting Postgres do
+ * it, because the anon role has no SELECT policy on `registrations` (there is
+ * no auth/user_id to scope a read to). That means `.insert().select()` would
+ * come back empty and throw. By choosing the id ourselves we can INSERT
+ * without reading anything back, and still thread the id through to the player
+ * rows and the confirmation page.
+ */
+function newRegistrationId(): string {
+  return crypto.randomUUID();
+}
+
 /* -------------------------------------------------------------------------- */
-/*  1. Submit registration + upload logo, player photos & documents           */
+/*  Submit the entire registration in one shot (single-submit-at-receipt)     */
 /* -------------------------------------------------------------------------- */
 
-export async function submitRegistration(data: RegistrationInput) {
-  // Get Tournament ID from slug
+/**
+ * Persist a registration, its players, their documents, the payment receipt,
+ * and the roster PDF — all at once, only ever INSERTing (never UPDATE/SELECT),
+ * so it works under the locked-down anon RLS policy.
+ *
+ * Buckets touched:
+ *   - team-logos            PUBLIC   (team logo)
+ *   - player-photos         PUBLIC   (player pictures)
+ *   - consent-forms         PRIVATE  (path only; signed on demand by admin)
+ *   - proof-of-age          PRIVATE  (path only; signed on demand by admin)
+ *   - receipts              PRIVATE  (payment receipt path; signed for admin)
+ *   - registration-receipts PUBLIC   (downloadable roster PDF)
+ */
+export async function submitRegistration(
+  data: RegistrationInput,
+): Promise<SubmitRegistrationResult> {
+  // Resolve tournament slug → id.
   const { data: tournament, error: tourneyError } = await supabase
     .from("tournaments")
     .select("id")
@@ -149,69 +200,105 @@ export async function submitRegistration(data: RegistrationInput) {
   if (tourneyError || !tournament)
     throw new Error("Invalid tournament selected.");
 
+  // Only submit players that were actually filled in.
+  const players = data.players.filter((p) => p.full_name.trim().length > 0);
+  if (players.length === 0)
+    throw new Error("Add at least one player before submitting.");
+
   // Validate everything up front so we don't create a half-written record.
   if (data.team_logo) validateFile(data.team_logo, "image", "Team logo");
-  data.players.forEach((p, i) => {
+  if (data.receipt_file)
+    validateFile(data.receipt_file, "doc", "Payment receipt");
+  players.forEach((p, i) => {
     if (p.photo) validateFile(p.photo, "image", `Player ${i + 1} photo`);
     validateFile(p.consent_form, "doc", `Player ${i + 1} consent form`);
     validateFile(p.proof_of_age, "doc", `Player ${i + 1} proof of age`);
   });
 
-  // Upload Team Logo — PUBLIC bucket (meant to be shown)
+  const regId = newRegistrationId();
+
+  // Team logo — PUBLIC bucket (meant to be shown).
   let teamLogoUrl = "";
   if (data.team_logo) {
-    const logoPath = `logos/${Date.now()}_${sanitizeFileName(data.team_logo.name)}`;
+    const logoPath = `${regId}/logo_${sanitizeFileName(data.team_logo.name)}`;
     await uploadToBucket("team-logos", logoPath, data.team_logo);
     teamLogoUrl = publicUrl("team-logos", logoPath);
   }
 
-  // Insert main registration record
-  const { data: reg, error: regError } = await supabase
-    .from("registrations")
-    .insert([
-      {
-        tournament_id: tournament.id,
-        contact_name: data.contact_name,
-        contact_phone: data.contact_phone,
-        contact_email: data.contact_email,
-        academy_name: data.academy_name,
-        team_logo_url: teamLogoUrl,
-        coach_full_name: data.coach_full_name,
-        coach_dob: data.coach_dob,
-        coach_nationality: data.coach_nationality,
-        payment_status: "pending_upload",
-      },
-    ])
-    .select()
-    .single();
+  // Payment receipt — PRIVATE bucket. Store the PATH; admin reads via signed URL.
+  let receiptPath: string | null = null;
+  if (data.receipt_file) {
+    receiptPath = `${regId}/receipt_${sanitizeFileName(data.receipt_file.name)}`;
+    await uploadToBucket("receipts", receiptPath, data.receipt_file);
+  }
+
+  // Roster PDF — PUBLIC bucket (registrant downloads it from confirmation page).
+  let receiptPdfUrl = "";
+  if (data.receipt_pdf_blob) {
+    const pdfPath = `${regId}/receipt.pdf`;
+    await uploadToBucket(
+      "registration-receipts",
+      pdfPath,
+      data.receipt_pdf_blob,
+      "application/pdf",
+    );
+    receiptPdfUrl = publicUrl("registration-receipts", pdfPath);
+  }
+
+  // A receipt means the registrant has paid and is awaiting manual verification.
+  // No receipt means they haven't reached the payment step yet.
+  const paymentStatus = data.receipt_file
+    ? "pending_verification"
+    : "pending_upload";
+
+  // Insert the registration with our client-chosen id — no .select() (anon has
+  // no read policy) and no later UPDATE (all client UPDATEs are RLS-blocked).
+  const { error: regError } = await supabase.from("registrations").insert([
+    {
+      id: regId,
+      tournament_id: tournament.id,
+      contact_name: data.contact_name,
+      contact_phone: data.contact_phone,
+      contact_email: data.contact_email,
+      academy_name: data.academy_name,
+      team_logo_url: teamLogoUrl,
+      coach_full_name: data.coach_full_name,
+      coach_dob: data.coach_dob,
+      coach_nationality: data.coach_nationality,
+      payment_receipt_path: receiptPath,
+      receipt_pdf_url: receiptPdfUrl,
+      payment_status: paymentStatus,
+    },
+  ]);
 
   if (regError) throw regError;
 
-  // Upload player files and create DB records for EVERY player
-  for (const player of data.players) {
+  // Upload each player's files and insert their row, referencing regId.
+  for (const player of players) {
     // Player photo — PUBLIC bucket (shown on squad pages). Optional.
     let photoUrl = "";
     if (player.photo) {
-      const photoPath = `${reg.id}/${Date.now()}_photo_${sanitizeFileName(player.photo.name)}`;
+      const photoPath = `${regId}/photo_${sanitizeFileName(player.photo.name)}`;
       await uploadToBucket("player-photos", photoPath, player.photo);
       photoUrl = publicUrl("player-photos", photoPath);
     }
 
     // Consent form — PRIVATE bucket. Store the PATH; read via signed URL.
-    const consentPath = `${reg.id}/${Date.now()}_consent_${sanitizeFileName(player.consent_form.name)}`;
+    const consentPath = `${regId}/consent_${sanitizeFileName(player.consent_form.name)}`;
     await uploadToBucket("consent-forms", consentPath, player.consent_form);
 
     // Proof of age — PRIVATE bucket. Store the PATH; read via signed URL.
-    const agePath = `${reg.id}/${Date.now()}_age_${sanitizeFileName(player.proof_of_age.name)}`;
+    const agePath = `${regId}/age_${sanitizeFileName(player.proof_of_age.name)}`;
     await uploadToBucket("proof-of-age", agePath, player.proof_of_age);
 
     const { error: playerErr } = await supabase.from("players").insert([
       {
-        registration_id: reg.id,
+        registration_id: regId,
         full_name: player.full_name,
         dob: player.dob,
         nationality: player.nationality,
         position: player.position,
+        jersey_number: player.jersey_number ?? null,
         photo_url: photoUrl, // public URL (safe to expose)
         consent_form_path: consentPath, // private path (sign on demand)
         proof_of_age_path: agePath, // private path (sign on demand)
@@ -221,33 +308,5 @@ export async function submitRegistration(data: RegistrationInput) {
     if (playerErr) throw playerErr;
   }
 
-  return reg;
-}
-
-/* -------------------------------------------------------------------------- */
-/*  2. Upload payment receipt & update status                                 */
-/* -------------------------------------------------------------------------- */
-
-export async function uploadPaymentReceipt(
-  registrationId: string,
-  receiptFile: File,
-) {
-  validateFile(receiptFile, "doc", "Payment receipt");
-
-  // Receipts — PRIVATE bucket. Store the PATH; read via signed URL.
-  const receiptPath = `${registrationId}/${Date.now()}_receipt_${sanitizeFileName(receiptFile.name)}`;
-  await uploadToBucket("receipts", receiptPath, receiptFile);
-
-  const { data, error: updateErr } = await supabase
-    .from("registrations")
-    .update({
-      payment_receipt_path: receiptPath,
-      payment_status: "pending_verification",
-    })
-    .eq("id", registrationId)
-    .select()
-    .single();
-
-  if (updateErr) throw updateErr;
-  return data;
+  return { id: regId, receipt_pdf_url: receiptPdfUrl };
 }
