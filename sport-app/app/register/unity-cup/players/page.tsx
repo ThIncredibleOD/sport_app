@@ -72,7 +72,7 @@ export default function PlayerRegistration() {
 
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "consentForm" | "proofOfAge",
+    field:"proofOfAge",
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -303,20 +303,7 @@ export default function PlayerRegistration() {
 
           {/* Document Uploads */}
           <div className="space-y-2 pt-1">
-            <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
-              <Upload className="h-3.5 w-3.5" />
-              <span className="truncate max-w-[220px]">
-                {currentPlayer.consentForm
-                  ? currentPlayer.consentForm.name
-                  : "Upload Consent Form"}
-              </span>
-              <input
-                type="file"
-                accept=".pdf,image/*"
-                onChange={(e) => handleFileUpload(e, "consentForm")}
-                className="hidden"
-              />
-            </label>
+            
 
             <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
               <Upload className="h-3.5 w-3.5" />
