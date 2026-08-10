@@ -44,7 +44,7 @@ export default function Hero() {
               href="/register"
               className="flex items-center gap-2 bg-green-800/40 hover:bg-green-800/60 border border-green-500/30 backdrop-blur-md text-white font-semibold px-6 py-3.5 rounded-lg shadow-lg shadow-green-950/20 transition-all duration-300 hover:-translate-y-0.5 group"
             >
-              Explore Our Leagues
+              Explore Our Competitions
               <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
 

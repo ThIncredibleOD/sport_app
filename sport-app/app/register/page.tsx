@@ -57,7 +57,7 @@ export default function RegisterTournament() {
                   The U16 Football League
                 </span>
                 <span className="text-[10px] sm:text-xs text-slate-400 font-normal">
-                  Under-16 grassroots championship
+                  The Nathaniel Idowu U16 Football Cup
                 </span>
               </div>
             </div>
@@ -82,10 +82,10 @@ export default function RegisterTournament() {
               </div>
               <div className="flex flex-col">
                 <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                  Secondary Cup
+                  All Secondary School Cup
                 </span>
                 <span className="text-[10px] sm:text-xs text-slate-400 font-normal">
-                  Inter-secondary school tournament
+                  The Nathaniel Idowu 7s Football League
                 </span>
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function RegisterTournament() {
                   Unity Cup
                 </span>
                 <span className="text-[10px] sm:text-xs text-slate-400 font-normal">
-                  Regional community tournament
+                The Nathaniel Idowu Unity Cup
                 </span>
               </div>
             </div>

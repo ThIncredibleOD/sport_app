@@ -99,7 +99,7 @@ export default function Navbar() {
           </div>
           {/* Logo*/}
           <div className="flex items-center">
-            <Link href="/Homepage" className="flex items-center ">
+            <Link href="/" className="flex items-center ">
               <Image
                 src="/logo.png"
                 alt="Page Logo"
