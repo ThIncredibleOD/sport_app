@@ -54,6 +54,26 @@ export const createEmptyPlayer = (): Player => ({
   passportPreview: null,
 });
 
+/**
+ * Required-field gaps for a single player, mirroring submitRegistration's
+ * hard requirements. A row only counts once it has a name (empty rows are
+ * dropped at submit); a named row must carry its consent form and proof of
+ * age — both are typed `File` and validated server-side, so a missing one
+ * makes the whole (already-paid) submission throw. This is the single source
+ * of truth for the review screen and the payment page's pre-submit guard.
+ */
+export const playerBlockingGaps = (player: Player): string[] => {
+  if (!player.fullName.trim()) return [];
+  const gaps: string[] = [];
+  if (!player.dateOfBirth.trim()) gaps.push("date of birth");
+  if (!player.nationality.trim()) gaps.push("nationality");
+  if (!player.jerseyNumber.trim()) gaps.push("jersey number");
+  if (!player.position.trim()) gaps.push("position");
+  if (!player.consentForm) gaps.push("consent form");
+  if (!player.proofOfAge) gaps.push("proof of age");
+  return gaps;
+};
+
 type RegisterContextType = {
   academyProfile: AcademyProfile;
   setAcademyProfile: React.Dispatch<React.SetStateAction<AcademyProfile>>;
@@ -130,6 +150,7 @@ export function useRegister() {
         coach_full_name: "",
         coach_dob: "",
         coach_nationality: "",
+        coach_photo: null as File | null,
         players: [],
       },
       resetForm: () => {},
@@ -146,6 +167,7 @@ export function useRegister() {
     coach_full_name: context.headCoach.fullName,
     coach_dob: context.headCoach.dateOfBirth,
     coach_nationality: context.headCoach.nationality,
+    coach_photo: context.headCoach.passport,
     players: context.players.map((p) => ({
       full_name: p.fullName,
       dob: p.dateOfBirth,

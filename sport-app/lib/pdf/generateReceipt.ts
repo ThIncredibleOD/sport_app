@@ -28,6 +28,8 @@ export interface ReceiptData {
   coachName: string;
   coachDob: string;
   coachNationality: string;
+  /** In-memory coach passport headshot. Compressed into the coach block. */
+  coachPhoto?: File | null;
   players: ReceiptPlayer[];
   /** Pre-formatted submission timestamp label (caller controls formatting). */
   submittedAtLabel: string;
@@ -115,8 +117,9 @@ export async function generateRegistrationReceipt(
   let y = 16;
 
   // Pre-compress all images up front (parallel).
-  const [logoThumb, playerThumbs] = await Promise.all([
+  const [logoThumb, coachThumb, playerThumbs] = await Promise.all([
     data.teamLogo ? fileToSquareJpeg(data.teamLogo, 90, 0.7) : Promise.resolve(null),
+    data.coachPhoto ? fileToSquareJpeg(data.coachPhoto, 90, 0.7) : Promise.resolve(null),
     Promise.all(
       data.players.map((p) =>
         p.photo ? fileToSquareJpeg(p.photo, 44, 0.7) : Promise.resolve(null),
@@ -190,6 +193,17 @@ export async function generateRegistrationReceipt(
   coachLines.forEach((line, i) => {
     doc.text(line, col2, blockStartY + i * 5);
   });
+
+  // Coach headshot — flush-right in the coach column, aligned with the block.
+  if (coachThumb) {
+    const s = 20;
+    const cx = pageWidth - marginX - s;
+    const cy = blockStartY - 5;
+    doc.addImage(coachThumb, "JPEG", cx, cy, s, s);
+    doc.setDrawColor(...MUTED);
+    doc.setLineWidth(0.3);
+    doc.rect(cx, cy, s, s);
+  }
 
   y = blockStartY + Math.max(academyLines.length, coachLines.length) * 5 + 4;
 

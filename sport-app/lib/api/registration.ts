@@ -21,6 +21,7 @@ export interface RegistrationInput {
   coach_dob: string;
   coach_nationality: string;
   team_logo?: File | null; // PUBLIC (meant to be shown)
+  coach_photo?: File | null; // PUBLIC (coach passport headshot — shown on review + receipt)
   players: PlayerInput[];
   /**
    * Payment receipt uploaded by the registrant — PRIVATE. When present, the
@@ -207,6 +208,7 @@ export async function submitRegistration(
 
   // Validate everything up front so we don't create a half-written record.
   if (data.team_logo) validateFile(data.team_logo, "image", "Team logo");
+  if (data.coach_photo) validateFile(data.coach_photo, "image", "Coach photo");
   if (data.receipt_file)
     validateFile(data.receipt_file, "doc", "Payment receipt");
   players.forEach((p, i) => {
@@ -223,6 +225,15 @@ export async function submitRegistration(
     const logoPath = `${regId}/logo_${sanitizeFileName(data.team_logo.name)}`;
     await uploadToBucket("team-logos", logoPath, data.team_logo);
     teamLogoUrl = publicUrl("team-logos", logoPath);
+  }
+
+  // Coach passport headshot — PUBLIC. Reuses the player-photos bucket (same kind
+  // of person photo, same visibility) so no extra bucket has to be provisioned.
+  let coachPhotoUrl = "";
+  if (data.coach_photo) {
+    const coachPath = `${regId}/coach_${sanitizeFileName(data.coach_photo.name)}`;
+    await uploadToBucket("player-photos", coachPath, data.coach_photo);
+    coachPhotoUrl = publicUrl("player-photos", coachPath);
   }
 
   // Payment receipt — PRIVATE bucket. Store the PATH; admin reads via signed URL.
@@ -265,6 +276,7 @@ export async function submitRegistration(
       coach_full_name: data.coach_full_name,
       coach_dob: data.coach_dob,
       coach_nationality: data.coach_nationality,
+      coach_photo_url: coachPhotoUrl,
       payment_receipt_path: receiptPath,
       receipt_pdf_url: receiptPdfUrl,
       payment_status: paymentStatus,

@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
 
       // Success — the httpOnly cookie is now set, redirect to approvals
       router.push("/admin/approvals");
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
       setLoading(false);
     }

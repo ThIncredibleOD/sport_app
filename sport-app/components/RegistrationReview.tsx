@@ -18,7 +18,7 @@ import {
   CheckCircle2,
   FileText,
 } from "lucide-react";
-import { useRegister } from "@/context/sportContext";
+import { useRegister, playerBlockingGaps } from "@/context/sportContext";
 
 type Props = {
   /** Tournament logo shown in the header, e.g. "/under1.png". */
@@ -36,15 +36,18 @@ type Props = {
 function useObjectUrl(file: File | null): string | null {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    if (!file) {
-      setUrl(null);
-      return;
-    }
+    if (!file) return;
     const objectUrl = URL.createObjectURL(file);
+    // Syncing an external browser resource (the object URL) into state — the
+    // "update from an external system" case this rule explicitly allows, but
+    // its heuristic can't tell createObjectURL is external. Correct as written.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
-  return url;
+  // Derive the empty case instead of a second setState — when there's no file
+  // there can be no URL, regardless of the last value we held.
+  return file ? url : null;
 }
 
 function Detail({
@@ -85,6 +88,27 @@ export default function RegistrationReview({
   const coachUrl = useObjectUrl(headCoach.passport);
 
   const filledCount = players.filter((p) => p.fullName.trim()).length;
+
+  // Per-player blocking gaps (keyed by player id) — mirrors submitRegistration's
+  // hard requirements so we never let an incomplete team reach the paid step.
+  const playerGaps = new Map(
+    players.map((p) => [p.id, playerBlockingGaps(p)]),
+  );
+  const playersWithGaps = players.filter(
+    (p) => (playerGaps.get(p.id) ?? []).length > 0,
+  ).length;
+
+  // Registration-level blockers.
+  const academyGaps: string[] = [];
+  if (!academyProfile.academyName.trim()) academyGaps.push("academy name");
+  if (!academyProfile.name.trim()) academyGaps.push("contact name");
+  if (!academyProfile.contactNumber.trim()) academyGaps.push("contact number");
+  if (!academyProfile.email.trim()) academyGaps.push("email");
+  if (!headCoach.fullName.trim()) academyGaps.push("head coach name");
+
+  const hasNoPlayers = filledCount === 0;
+  const canProceed =
+    !hasNoPlayers && playersWithGaps === 0 && academyGaps.length === 0;
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
@@ -202,12 +226,15 @@ export default function RegistrationReview({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {players.map((player, index) => {
               const isFilled = player.fullName.trim().length > 0;
+              const gaps = playerGaps.get(player.id) ?? [];
               return (
                 <div
                   key={player.id}
                   className={`flex items-center gap-3 rounded-lg border p-2.5 transition-colors ${
                     isFilled
-                      ? "border-white/15 bg-slate-950/50"
+                      ? gaps.length > 0
+                        ? "border-amber-500/40 bg-amber-950/10"
+                        : "border-white/15 bg-slate-950/50"
                       : "border-dashed border-white/10 bg-slate-950/20"
                   }`}
                 >
@@ -250,7 +277,7 @@ export default function RegistrationReview({
                       <div className="mt-1 flex items-center gap-2 text-[10px]">
                         <span
                           className={`inline-flex items-center gap-1 ${
-                            player.consentForm ? "text-[#16a34a]" : "text-slate-500"
+                            player.consentForm ? "text-[#16a34a]" : "text-amber-400"
                           }`}
                         >
                           <FileText className="h-3 w-3" />
@@ -258,13 +285,19 @@ export default function RegistrationReview({
                         </span>
                         <span
                           className={`inline-flex items-center gap-1 ${
-                            player.proofOfAge ? "text-[#16a34a]" : "text-slate-500"
+                            player.proofOfAge ? "text-[#16a34a]" : "text-amber-400"
                           }`}
                         >
                           <FileText className="h-3 w-3" />
                           Age proof
                         </span>
                       </div>
+                      {gaps.length > 0 && (
+                        <p className="mt-1 flex items-start gap-1 text-[10px] text-amber-400">
+                          <AlertTriangle className="h-3 w-3 shrink-0 mt-px" />
+                          <span>Missing: {gaps.join(", ")}</span>
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="min-w-0 flex-1">
@@ -290,6 +323,34 @@ export default function RegistrationReview({
           </span>
         </div>
 
+        {/* Blocking summary — payment happens off-site (bank transfer), so an
+            incomplete team MUST be caught here, before any money moves. */}
+        {!canProceed && (
+          <div className="mt-3 rounded-lg border border-red-500/40 bg-red-950/20 p-3 text-[11px] text-red-200">
+            <p className="flex items-center gap-1.5 font-semibold text-red-300">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              Complete these before you pay
+            </p>
+            <ul className="mt-1.5 ml-5 list-disc space-y-0.5">
+              {hasNoPlayers && <li>Add at least one player.</li>}
+              {academyGaps.length > 0 && (
+                <li>Academy details missing: {academyGaps.join(", ")}.</li>
+              )}
+              {playersWithGaps > 0 && (
+                <li>
+                  {playersWithGaps} player{playersWithGaps === 1 ? "" : "s"} still
+                  missing required details or documents (see the amber rows
+                  above).
+                </li>
+              )}
+            </ul>
+            <p className="mt-1.5 text-red-300/80">
+              You pay by bank transfer yourself, so we can&apos;t refund a
+              submission that fails here. Please fix the above first.
+            </p>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="mt-5 flex flex-col sm:flex-row gap-2.5">
           <button
@@ -302,8 +363,18 @@ export default function RegistrationReview({
           </button>
           <button
             type="button"
-            onClick={() => router.push(paymentRoute)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2.5 px-4 text-xs font-semibold text-white hover:bg-[#15803d] transition-all shadow-lg shadow-emerald-950/50"
+            onClick={() => canProceed && router.push(paymentRoute)}
+            disabled={!canProceed}
+            title={
+              canProceed
+                ? undefined
+                : "Complete all required details and documents first"
+            }
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-2.5 px-4 text-xs font-semibold transition-all ${
+              canProceed
+                ? "bg-[#16a34a] text-white hover:bg-[#15803d] shadow-lg shadow-emerald-950/50"
+                : "cursor-not-allowed bg-slate-800 text-slate-500 border border-white/10"
+            }`}
           >
             <CheckCircle2 className="h-4 w-4" />
             <span>Proceed to Payment</span>

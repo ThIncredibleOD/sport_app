@@ -9,7 +9,7 @@
 --
 --  2. Create these STORAGE BUCKETS in the dashboard (Storage → New bucket):
 --        team-logos            PUBLIC   (team logos are meant to be shown)
---        player-photos         PUBLIC   (player pictures are meant to be shown)
+--        player-photos         PUBLIC   (player pictures + coach headshot — meant to be shown)
 --        consent-forms         PRIVATE  (minors' documents — signed URL only)
 --        proof-of-age          PRIVATE  (minors' documents — signed URL only)
 --        receipts              PRIVATE  (payment receipts — signed URL only)
@@ -42,7 +42,8 @@ ALTER TABLE players
 
 ALTER TABLE registrations
   ADD COLUMN IF NOT EXISTS payment_receipt_path TEXT,
-  ADD COLUMN IF NOT EXISTS receipt_pdf_url TEXT;
+  ADD COLUMN IF NOT EXISTS receipt_pdf_url TEXT,
+  ADD COLUMN IF NOT EXISTS coach_photo_url TEXT;
 
 
 -- ----------------------------------------------------------------------------
