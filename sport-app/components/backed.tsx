@@ -13,10 +13,10 @@ export default function Partners() {
           </h2>
         </div>
 
-        {/* Logo Grid */}
-        <div className="flex flex-wrap items-center justify-between gap-12 md:gap-20 lg:gap-28 w-full">
+        {/* Logo Grid (4 Items) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center w-full">
           {/* Logo 1 */}
-          <div className="relative w-[190px] h-[70px] md:w-[230px] md:h-[85px] transition-all duration-300">
+          <div className="relative w-[150px] h-[60px] md:w-[180px] md:h-[75px] transition-all duration-300">
             <Image
               src="/logo1.png"
               alt="FreeStack Inc. Logo"
@@ -26,7 +26,7 @@ export default function Partners() {
           </div>
 
           {/* Logo 2 */}
-          <div className="relative w-[170px] h-[85px] md:w-[210px] md:h-[105px] transition-all duration-300">
+          <div className="relative w-[150px] h-[60px] md:w-[180px] md:h-[75px] transition-all duration-300">
             <Image
               src="/logo2.jpg"
               alt="Let Her Play Logo"
@@ -36,7 +36,7 @@ export default function Partners() {
           </div>
 
           {/* Logo 3 */}
-          <div className="relative w-[210px] h-[70px] md:w-[250px] md:h-[85px] transition-all duration-300">
+          <div className="relative w-[150px] h-[60px] md:w-[180px] md:h-[75px] transition-all duration-300">
             <Image
               src="/logo3.jpg"
               alt="Peakline Sports World Logo"
@@ -44,6 +44,21 @@ export default function Partners() {
               className="object-contain"
             />
           </div>
+
+          {/* Logo 4  */}
+          <a
+            href="https://gearemup.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative w-[150px] h-[60px] md:w-[180px] md:h-[75px] transition-all duration-300 hover:opacity-80 cursor-pointer block"
+          >
+            <Image
+              src="/logo4.png"
+              alt="Gear em up logo"
+              fill
+              className="object-contain"
+            />
+          </a>
         </div>
       </div>
     </section>
