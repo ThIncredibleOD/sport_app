@@ -7,7 +7,7 @@ export default function UnityCupReviewPage() {
       logoAlt="The Nathaniel Idowu Unity Football League"
       tournamentName="The Nathaniel Idowu Unity Cup"
       editRoute="/register/unity-cup/players"
-      paymentRoute="/register/unity-cup/payment"
+      submitRoute="/register/unity-cup/submit"
     />
   );
 }

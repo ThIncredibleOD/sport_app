@@ -10,8 +10,11 @@ import {
   Plus,
   Upload,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useRegister, createEmptyPlayer } from "@/context/sportContext";
+import PhotoUpload from "@/components/PhotoUpload";
+import { compressDocumentImage, kb, MAX_UPLOAD_BYTES } from "@/lib/images";
 
 const BACK_ROUTE = "/register/unity-cup/academy-squad";
 const REVIEW_ROUTE = "/register/unity-cup/review";
@@ -23,6 +26,8 @@ export default function PlayerRegistration() {
   const router = useRouter();
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [ageBusy, setAgeBusy] = useState(false);
+  const [ageError, setAgeError] = useState<string | null>(null);
   const total = players.length;
   const isLast = currentIndex === total - 1;
   const currentPlayer = players[currentIndex];
@@ -54,39 +59,63 @@ export default function PlayerRegistration() {
     });
   };
 
-  const handlePassportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const previewUrl = URL.createObjectURL(file);
-      setPlayers((prev) => {
-        const updated = [...prev];
-        updated[currentIndex] = {
-          ...updated[currentIndex],
-          passport: file,
-          passportPreview: previewUrl,
-        };
-        return updated;
-      });
-    }
+  const handlePlayerPhoto = (file: File | null) => {
+    // PhotoUpload has already downscaled and JPEG-encoded this. We keep a
+    // preview URL in context so the review screen's roster grid can render a
+    // thumbnail without re-deriving one per row.
+    const previewUrl = file ? URL.createObjectURL(file) : null;
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[currentIndex] = {
+        ...updated[currentIndex],
+        passport: file,
+        passportPreview: previewUrl,
+      };
+      return updated;
+    });
   };
 
-  const handleFileUpload = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field:"proofOfAge",
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+  const handleProofOfAge = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset so re-picking the same filename still fires a change event.
+    e.target.value = "";
+    if (!file) return;
+
+    const idx = currentIndex;
+    setAgeBusy(true);
+    setAgeError(null);
+    try {
+      // A phone photo of a birth certificate is 3-8MB and the per-file budget is
+      // 120KB, so downscale here — while the user is still filling the form —
+      // rather than stalling them at submit. PDFs pass through untouched; they
+      // can't be re-encoded in a canvas, which is why the size check below
+      // matters and why the error steers them to a photo instead.
+      const prepared = await compressDocumentImage(file);
+
+      if (prepared.size > MAX_UPLOAD_BYTES) {
+        setAgeError(
+          prepared.type === "application/pdf"
+            ? `That PDF is ${kb(prepared.size)}KB and can't be compressed automatically. Please take a photo of the document instead.`
+            : `Still ${kb(prepared.size)}KB after compressing (max ${kb(MAX_UPLOAD_BYTES)}KB). Try a closer photo of just the document, without the background.`,
+        );
+        return;
+      }
+
       setPlayers((prev) => {
         const updated = [...prev];
-        updated[currentIndex] = { ...updated[currentIndex], [field]: file };
+        updated[idx] = { ...updated[idx], proofOfAge: prepared };
         return updated;
       });
+    } catch {
+      setAgeError("Couldn't read that file. Try a photo of the document.");
+    } finally {
+      setAgeBusy(false);
     }
   };
 
   // Advance through the carousel; on the last player, move on to the review
   // screen (data persists in context — nothing is submitted here).
-  const handleAddPlayerSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddPlayerSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isLast) {
       setCurrentIndex((prev) => prev + 1);
@@ -107,12 +136,6 @@ export default function PlayerRegistration() {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-        style={{ backgroundImage: `url('/hero.png')` }}
-      />
-      <div className="absolute inset-0 bg-slate-950/50" />
-
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
         {/* Top Back Link */}
         <div className="w-full flex justify-start relative z-10 mb-2">
@@ -185,27 +208,14 @@ export default function PlayerRegistration() {
           className="mt-4 space-y-3.5 relative z-10"
           onSubmit={handleAddPlayerSubmit}
         >
-          {/* Passport Upload */}
+          {/* Passport photo — live camera, phone camera, or a file */}
           <div className="flex flex-col items-center justify-center gap-2 py-1">
-            <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] transition-all overflow-hidden group">
-              {currentPlayer.passportPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={currentPlayer.passportPreview}
-                  alt="Passport Preview"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Plus className="h-6 w-6 text-slate-300 group-hover:text-white" />
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePassportChange}
-                className="hidden"
-              />
-            </label>
-            <span className="text-xs text-slate-300">Upload Passport</span>
+            <PhotoUpload
+              value={currentPlayer.passport}
+              onChange={handlePlayerPhoto}
+              label="Upload Passport"
+              shape="square"
+            />
           </div>
 
           {/* Player Full Name */}
@@ -296,29 +306,53 @@ export default function PlayerRegistration() {
           </div>
 
           {/* Warning */}
-          <div className="flex items-center gap-1.5 pt-1 text-[11px] text-amber-500">
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            <span>file must be signed by their parent/guardian.</span>
+          <div className="flex items-start gap-1.5 pt-1 text-[11px] text-amber-500">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
+            <span>
+              Bring each player&apos;s signed parental consent form and their
+              original proof of age to the registration desk.
+            </span>
           </div>
 
-          {/* Document Uploads */}
+          {/* Proof of age — the only document uploaded online */}
           <div className="space-y-2 pt-1">
-            
-
-            <label className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#eab308] hover:bg-[#ca8a04] py-2 px-4 text-xs font-semibold text-slate-950 cursor-pointer shadow-md transition-all">
-              <Upload className="h-3.5 w-3.5" />
+            <label
+              className={`flex w-full items-center justify-center gap-2 rounded-lg py-2 px-4 text-xs font-semibold text-slate-950 shadow-md transition-all ${
+                ageBusy
+                  ? "bg-slate-700 text-slate-400 cursor-wait"
+                  : "bg-[#eab308] hover:bg-[#ca8a04] cursor-pointer"
+              }`}
+            >
+              {ageBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
               <span className="truncate max-w-[220px]">
-                {currentPlayer.proofOfAge
-                  ? currentPlayer.proofOfAge.name
-                  : "Upload Proof Of Age"}
+                {ageBusy
+                  ? "Compressing..."
+                  : currentPlayer.proofOfAge
+                    ? currentPlayer.proofOfAge.name
+                    : "Upload Proof Of Age"}
               </span>
               <input
                 type="file"
                 accept=".pdf,image/*"
-                onChange={(e) => handleFileUpload(e, "proofOfAge")}
+                onChange={handleProofOfAge}
                 className="hidden"
+                disabled={ageBusy}
               />
             </label>
+            {currentPlayer.proofOfAge && !ageBusy && !ageError && (
+              <p className="text-center text-[10px] text-[#16a34a]">
+                Ready ({kb(currentPlayer.proofOfAge.size)}KB)
+              </p>
+            )}
+            {ageError && (
+              <p className="text-center text-[10px] text-amber-400">
+                {ageError}
+              </p>
+            )}
           </div>
 
           {/* Action Buttons */}

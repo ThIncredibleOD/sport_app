@@ -1,8 +1,8 @@
-import PaymentFlow from "@/components/PaymentFlow";
+import SubmitFlow from "@/components/SubmitFlow";
 
-export default function UnityCupPaymentPage() {
+export default function UnityCupSubmitPage() {
   return (
-    <PaymentFlow
+    <SubmitFlow
       tournamentSlug="unity-cup"
       tournamentName="The Nathaniel Idowu Unity Cup"
       logoSrc="/unity.png"

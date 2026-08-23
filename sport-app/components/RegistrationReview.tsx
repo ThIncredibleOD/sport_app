@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  CreditCard,
+  ArrowRight,
   Building2,
   Phone,
   Mail,
@@ -28,8 +28,8 @@ type Props = {
   tournamentName: string;
   /** Where "Go Back to Edit" returns to (the players carousel). */
   editRoute: string;
-  /** Where "Proceed to Payment" advances to (must stay inside this flow's provider). */
-  paymentRoute: string;
+  /** Where "Continue to Submit" advances to (must stay inside this flow's provider). */
+  submitRoute: string;
 };
 
 /** Small helper: derive a temporary object URL for a File, cleaning it up on change/unmount. */
@@ -79,7 +79,7 @@ export default function RegistrationReview({
   logoAlt,
   tournamentName,
   editRoute,
-  paymentRoute,
+  submitRoute,
 }: Props) {
   const { academyProfile, headCoach, players } = useRegister();
   const router = useRouter();
@@ -90,7 +90,8 @@ export default function RegistrationReview({
   const filledCount = players.filter((p) => p.fullName.trim()).length;
 
   // Per-player blocking gaps (keyed by player id) — mirrors submitRegistration's
-  // hard requirements so we never let an incomplete team reach the paid step.
+  // hard requirements so an incomplete team can't reach the submit step and fail
+  // partway through the upload.
   const playerGaps = new Map(
     players.map((p) => [p.id, playerBlockingGaps(p)]),
   );
@@ -112,12 +113,6 @@ export default function RegistrationReview({
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-        style={{ backgroundImage: `url('/hero.png')` }}
-      />
-      <div className="absolute inset-0 bg-slate-950/50" />
-
       <div className="relative z-10 w-full max-w-3xl mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
         {/* Top Back Link */}
         <div className="w-full flex justify-start mb-2">
@@ -145,7 +140,7 @@ export default function RegistrationReview({
           <p className="mt-1 text-xs text-slate-400 max-w-md leading-relaxed">
             {tournamentName}. Please confirm every detail below is correct.{" "}
             <span className="text-amber-400">
-              Once your payment is approved, changes are no longer possible.
+              Once you submit, you can&apos;t change it yourself.
             </span>
           </p>
         </div>
@@ -277,14 +272,6 @@ export default function RegistrationReview({
                       <div className="mt-1 flex items-center gap-2 text-[10px]">
                         <span
                           className={`inline-flex items-center gap-1 ${
-                            player.consentForm ? "text-[#16a34a]" : "text-amber-400"
-                          }`}
-                        >
-                          <FileText className="h-3 w-3" />
-                          Consent
-                        </span>
-                        <span
-                          className={`inline-flex items-center gap-1 ${
                             player.proofOfAge ? "text-[#16a34a]" : "text-amber-400"
                           }`}
                         >
@@ -317,21 +304,21 @@ export default function RegistrationReview({
         <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 text-[11px] text-amber-300">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>
-            Nothing is submitted yet. Your details are saved on this device only.
-            They are sent for approval after you upload your payment receipt on
-            the next step.
+            Nothing is submitted yet. Your details are saved on this device only
+            — they are sent on the next step.
           </span>
         </div>
 
-        {/* Blocking summary — payment happens off-site (bank transfer), so an
-            incomplete team MUST be caught here, before any money moves. */}
+        {/* Blocking summary. submitRegistration requires a proof-of-age file per
+            player, so an incomplete team has to be caught here rather than
+            failing partway through the upload and leaving a half-written row. */}
         {!canProceed && (
-          <div className="mt-3 rounded-lg border border-red-500/40 bg-red-950/20 p-3 text-[11px] text-red-200">
-            <p className="flex items-center gap-1.5 font-semibold text-red-300">
+          <div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-950/25 p-3 text-[11px] text-amber-100">
+            <p className="flex items-center gap-1.5 font-semibold text-amber-200">
               <AlertTriangle className="h-4 w-4 shrink-0" />
-              Complete these before you pay
+              Complete these before submitting
             </p>
-            <ul className="mt-1.5 ml-5 list-disc space-y-0.5">
+            <ul className="mt-1.5 ml-5 list-disc space-y-0.5 text-amber-200/90">
               {hasNoPlayers && <li>Add at least one player.</li>}
               {academyGaps.length > 0 && (
                 <li>Academy details missing: {academyGaps.join(", ")}.</li>
@@ -339,15 +326,11 @@ export default function RegistrationReview({
               {playersWithGaps > 0 && (
                 <li>
                   {playersWithGaps} player{playersWithGaps === 1 ? "" : "s"} still
-                  missing required details or documents (see the amber rows
+                  missing required details or proof of age (see the amber rows
                   above).
                 </li>
               )}
             </ul>
-            <p className="mt-1.5 text-red-300/80">
-              You pay by bank transfer yourself, so we can&apos;t refund a
-              submission that fails here. Please fix the above first.
-            </p>
           </div>
         )}
 
@@ -363,12 +346,12 @@ export default function RegistrationReview({
           </button>
           <button
             type="button"
-            onClick={() => canProceed && router.push(paymentRoute)}
+            onClick={() => canProceed && router.push(submitRoute)}
             disabled={!canProceed}
             title={
               canProceed
                 ? undefined
-                : "Complete all required details and documents first"
+                : "Complete all required details and proof of age first"
             }
             className={`flex flex-1 items-center justify-center gap-1.5 rounded-md py-2.5 px-4 text-xs font-semibold transition-all ${
               canProceed
@@ -377,8 +360,8 @@ export default function RegistrationReview({
             }`}
           >
             <CheckCircle2 className="h-4 w-4" />
-            <span>Proceed to Payment</span>
-            <CreditCard className="h-3.5 w-3.5" />
+            <span>Continue to Submit</span>
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

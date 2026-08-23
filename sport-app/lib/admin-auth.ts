@@ -8,8 +8,9 @@ const ADMIN_COOKIE = "admin_auth";
  * The proxy (proxy.ts) already guards every /api/admin/* request, but the
  * Next.js middleware/proxy-bypass advisory CVE-2026-64642 is a reminder that a
  * proxy must never be the ONLY gate on sensitive server work. Each route that
- * mutates payment status or mints a signed URL for a private document re-checks
- * the session cookie here, so even a proxy bypass can't reach those operations.
+ * changes a registration's state or mints a signed URL for a private document
+ * re-checks the session cookie here, so even a proxy bypass can't reach those
+ * operations.
  *
  * Fails closed: if ADMIN_TOKEN is unset, no request is ever authorized.
  */

@@ -1,56 +1,34 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRegister } from "@/context/sportContext";
+import PhotoUpload from "@/components/PhotoUpload";
+
+const NEXT_ROUTE = "/register/unity-cup/academy-squad";
+const LOGO_SRC = "/unity.png";
+const LOGO_ALT = "The Nathaniel Idowu Unity Football League";
 
 export default function AccountProfile() {
   const { academyProfile, setAcademyProfile } = useRegister();
   const router = useRouter();
 
-  // State for Passport Upload & Preview
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-
-  // Logo Image Handler
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setAcademyProfile((prev) => ({ ...prev, logo: file }));
-      setLogoPreview(URL.createObjectURL(file));
-    }
+  // PhotoUpload hands back an already-compressed JPEG File, so the logo is
+  // under the upload cap the moment it's picked rather than at final submit.
+  const handleLogo = (file: File | null) => {
+    setAcademyProfile((prev) => ({ ...prev, logo: file }));
   };
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Submitted Profile Data:", academyProfile, logoPreview);
-
-    // Navigate to next step
-    router.push("/register/unity-cup/academy-squad");
+    // Nothing is sent here — the details live in context until the submit step.
+    router.push(NEXT_ROUTE);
   };
-
-  useEffect(() => {
-    if (!academyProfile.logo) return;
-
-    const url = URL.createObjectURL(academyProfile.logo);
-    setLogoPreview(url);
-
-    return () => {
-      URL.revokeObjectURL(url);
-    };
-  }, [academyProfile.logo]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-        style={{ backgroundImage: `url('/hero.png')` }}
-      />
-      {/* Dark layer */}
-      <div className="absolute inset-0 bg-slate-950/50" />
-
       {/* Modal Card */}
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
         {/* Back Link */}
@@ -66,10 +44,10 @@ export default function AccountProfile() {
         <div className="flex flex-col items-center text-center">
           <div className="mb-4 flex justify-center">
             <Image
-              src="/under1.png"
+              src={LOGO_SRC}
               height="800"
               width="1200"
-              alt="The Nathaniel Idowu Under 16 Football League"
+              alt={LOGO_ALT}
               className="h-20 w-auto object-contain"
             />
           </div>
@@ -84,28 +62,14 @@ export default function AccountProfile() {
 
         {/* Registration Form */}
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          {/* Upload logo  */}
+          {/* Team logo — camera or file, compressed on selection */}
           <div className="flex flex-col items-center justify-center gap-2 py-1">
-            <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
-              {logoPreview ? (
-                <Image
-                  src={logoPreview}
-                  height="800"
-                  width="1600"
-                  alt="Logo Preview"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Plus className="h-6 w-6 text-slate-300 group-hover:text-white transition-colors" />
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoChange}
-                className="hidden"
-              />
-            </label>
-            <span className="text-xs text-slate-300">Upload Team Logo</span>
+            <PhotoUpload
+              value={academyProfile.logo}
+              onChange={handleLogo}
+              label="Upload Team Logo"
+              shape="square"
+            />
           </div>
 
           {/* Name Field */}
@@ -141,7 +105,8 @@ export default function AccountProfile() {
               Contact Number
             </label>
             <input
-              type="number"
+              type="tel"
+              inputMode="tel"
               id="contactNumber"
               name="contactNumber"
               value={academyProfile.contactNumber}
@@ -178,6 +143,9 @@ export default function AccountProfile() {
               required
               className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none focus:ring-1 focus:ring-[#16a34a] transition-all"
             />
+            <p className="mt-1 text-[10px] text-slate-500">
+              Used to reach you if anything needs checking — no mail is sent.
+            </p>
           </div>
 
           {/* Academy Name Field */}

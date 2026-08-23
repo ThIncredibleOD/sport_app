@@ -1,65 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRegister } from "@/context/sportContext";
 import Image from "next/image";
+import PhotoUpload from "@/components/PhotoUpload";
+
+const BACK_ROUTE = "/register/league/account-profile";
+const NEXT_ROUTE = "/register/league/players";
+const LOGO_SRC = "/under1.png";
+const LOGO_ALT = "The Nathaniel Idowu Under 16 Football League";
 
 export default function AcademySquadRegistration() {
   const { headCoach, setHeadCoach } = useRegister();
   const router = useRouter();
 
-  const [passportPreview, setPassportPreview] = useState<string | null>(null);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setHeadCoach((prev) => ({ ...prev, passport: file }));
-      setPassportPreview(URL.createObjectURL(file));
-    }
+  // PhotoUpload hands back an already-compressed JPEG File, so the passport is
+  // under the upload cap the moment it's taken rather than at final submit.
+  const handlePassport = (file: File | null) => {
+    setHeadCoach((prev) => ({ ...prev, passport: file }));
   };
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Log or handle squad data locally
-    console.log("Submitted Squad Registration:", {
-      headCoach,
-      passportPreview,
-    });
-
-    // Navigate to the next step
-    router.push("/register/league/players");
+    // Nothing is sent here — the details live in context until the submit step.
+    router.push(NEXT_ROUTE);
   };
-
-  useEffect(() => {
-    if (!headCoach.passport) return;
-
-    const url = URL.createObjectURL(headCoach.passport);
-    setPassportPreview(url);
-
-    return () => {
-      URL.revokeObjectURL(url);
-    };
-  }, [headCoach.passport]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-        style={{ backgroundImage: `url('/hero.png')` }}
-      />
-      {/* Dark  Layer */}
-      <div className="absolute inset-0 bg-slate-950/50" />
-
       {/* Glass Modal Card */}
       <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none overflow-hidden">
         {/* Back Link to Previous Page */}
         <button
           type="button"
-          onClick={() => router.push("/register/league/account-profile")}
+          onClick={() => router.push(BACK_ROUTE)}
           className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors duration-150 mb-4 relative z-10"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -71,10 +47,10 @@ export default function AcademySquadRegistration() {
           {/* League Logo */}
           <div className="mb-4 flex justify-center">
             <Image
-              src="/under1.png"
+              src={LOGO_SRC}
               height="800"
               width="1200"
-              alt="The Nathaniel Idowu Under 16 Football League"
+              alt={LOGO_ALT}
               className="h-20 w-auto object-contain"
             />
           </div>
@@ -91,33 +67,14 @@ export default function AcademySquadRegistration() {
 
         {/* Registration Form */}
         <form className="mt-6 space-y-4 relative z-10" onSubmit={handleSubmit}>
-          {/* Upload Passport Section */}
+          {/* Head coach passport — camera or file, compressed on selection */}
           <div className="flex flex-col items-center justify-center gap-2 py-2">
-            <label className="relative flex flex-col items-center justify-center w-20 h-20 rounded-xl border border-dashed border-white/30 bg-slate-950/40 backdrop-blur-sm cursor-pointer hover:border-[#16a34a] hover:bg-slate-950/60 transition-all overflow-hidden group">
-              {passportPreview ? (
-                <Image
-                  src={passportPreview}
-                  height="800"
-                  width="1600"
-                  alt="Passport Preview"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center text-slate-300 group-hover:text-white">
-                  <Plus className="h-6 w-6 stroke-[1.5]" />
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </label>
-
-            <span className="text-xs font-medium text-slate-300 text-center">
-              Upload Passport
-            </span>
+            <PhotoUpload
+              value={headCoach.passport}
+              onChange={handlePassport}
+              label="Upload Passport"
+              shape="square"
+            />
           </div>
           {/* Head Coach Full Name */}
           <div>

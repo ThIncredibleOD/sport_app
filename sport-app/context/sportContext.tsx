@@ -31,7 +31,6 @@ export type Player = {
   nationality: string;
   jerseyNumber: string;
   position: string;
-  consentForm: File | null;
   proofOfAge: File | null;
   passportPreview: string | null;
 };
@@ -49,18 +48,19 @@ export const createEmptyPlayer = (): Player => ({
   nationality: "",
   jerseyNumber: "",
   position: "",
-  consentForm: null,
   proofOfAge: null,
   passportPreview: null,
 });
 
 /**
- * Required-field gaps for a single player, mirroring submitRegistration's
- * hard requirements. A row only counts once it has a name (empty rows are
- * dropped at submit); a named row must carry its consent form and proof of
- * age — both are typed `File` and validated server-side, so a missing one
- * makes the whole (already-paid) submission throw. This is the single source
- * of truth for the review screen and the payment page's pre-submit guard.
+ * Required-field gaps for a single player, mirroring submitRegistration's hard
+ * requirements. A row only counts once it has a name (empty rows are dropped at
+ * submit); a named row must carry its proof of age, which is typed `File` and
+ * would otherwise make the whole submission throw. This is the single source of
+ * truth for the review screen and the submit page's pre-submit guard.
+ *
+ * The signed parental consent form is deliberately NOT checked here — it is
+ * handed over on paper at the registration desk, not uploaded.
  */
 export const playerBlockingGaps = (player: Player): string[] => {
   if (!player.fullName.trim()) return [];
@@ -69,7 +69,6 @@ export const playerBlockingGaps = (player: Player): string[] => {
   if (!player.nationality.trim()) gaps.push("nationality");
   if (!player.jerseyNumber.trim()) gaps.push("jersey number");
   if (!player.position.trim()) gaps.push("position");
-  if (!player.consentForm) gaps.push("consent form");
   if (!player.proofOfAge) gaps.push("proof of age");
   return gaps;
 };
@@ -174,7 +173,6 @@ export function useRegister() {
       nationality: p.nationality,
       position: p.position,
       photo: p.passport,
-      consent_form: p.consentForm as File,
       proof_of_age: p.proofOfAge as File,
     })),
   };

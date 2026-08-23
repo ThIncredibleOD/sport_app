@@ -1,8 +1,8 @@
-import PaymentFlow from "@/components/PaymentFlow";
+import SubmitFlow from "@/components/SubmitFlow";
 
-export default function LeaguePaymentPage() {
+export default function LeagueSubmitPage() {
   return (
-    <PaymentFlow
+    <SubmitFlow
       tournamentSlug="u16-league"
       tournamentName="The Nathaniel Idowu Under 16 Football League"
       logoSrc="/under1.png"

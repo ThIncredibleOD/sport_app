@@ -1,4 +1,10 @@
 import { supabase } from "../supabase";
+import { errorMessage } from "../errors";
+import {
+  compressDocumentImage,
+  compressPhoto,
+  MAX_UPLOAD_BYTES,
+} from "../images";
 
 export interface PlayerInput {
   full_name: string;
@@ -7,12 +13,17 @@ export interface PlayerInput {
   position: string;
   jersey_number?: string;
   photo?: File | null; // Player picture — PUBLIC (meant to be shown on squad pages)
-  consent_form: File; // PRIVATE (minor's document)
   proof_of_age: File; // PRIVATE (minor's document)
 }
 
 export interface RegistrationInput {
   tournament_slug: string;
+  /**
+   * Pre-allocated registration id. Pass one when the caller needs the id BEFORE
+   * submitting — the roster PDF prints its reference number, and that PDF is
+   * built before the upload starts. Omit it and one is generated here.
+   */
+  id?: string;
   contact_name: string;
   contact_phone: string;
   contact_email: string;
@@ -21,21 +32,17 @@ export interface RegistrationInput {
   coach_dob: string;
   coach_nationality: string;
   team_logo?: File | null; // PUBLIC (meant to be shown)
-  coach_photo?: File | null; // PUBLIC (coach passport headshot — shown on review + receipt)
+  coach_photo?: File | null; // PUBLIC (coach passport headshot — shown on review + summary)
   players: PlayerInput[];
   /**
-   * Payment receipt uploaded by the registrant — PRIVATE. When present, the
-   * whole registration is submitted in one shot with status
-   * "pending_verification" (the single-submit-at-receipt flow). When absent,
-   * nothing about payment is recorded and the status stays "pending_upload".
-   */
-  receipt_file?: File | null;
-  /**
-   * Pre-rendered roster receipt PDF (generated client-side from the in-memory
+   * Pre-rendered roster summary PDF (generated client-side from the in-memory
    * File objects). Stored in a PUBLIC bucket so the registrant can download it
-   * from the confirmation page. Optional.
+   * from the confirmation page and the admin page can link to the same URL.
+   * Optional.
    */
   receipt_pdf_blob?: Blob | null;
+  /** Optional progress reporter so the UI can narrate a slow submit. */
+  onProgress?: (message: string) => void;
 }
 
 export interface SubmitRegistrationResult {
@@ -47,9 +54,11 @@ export interface SubmitRegistrationResult {
 /*  File validation & upload helpers                                          */
 /* -------------------------------------------------------------------------- */
 
-const MB = 1024 * 1024;
-const MAX_IMAGE_BYTES = 5 * MB;
-const MAX_DOC_BYTES = 10 * MB;
+/*
+ * The hard per-file ceiling (MAX_UPLOAD_BYTES, currently 120KB) lives in
+ * lib/images.ts next to the compression targets that have to satisfy it — one
+ * number, not two that drift apart. See that file for the storage-budget maths.
+ */
 
 const IMAGE_MIME = [
   "image/jpeg",
@@ -82,7 +91,7 @@ function extensionOf(name: string): string {
 /**
  * Validate a user-supplied file before uploading. This is the single choke
  * point for every storage upload in the app — enforcing type + size here
- * covers all registration/receipt paths.
+ * covers all registration paths.
  */
 function validateFile(
   file: File,
@@ -92,10 +101,16 @@ function validateFile(
   if (!file) throw new Error(`${label} is required.`);
   if (file.size === 0) throw new Error(`${label} appears to be empty.`);
 
-  const max = kind === "image" ? MAX_IMAGE_BYTES : MAX_DOC_BYTES;
-  if (file.size > max) {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    const isPdf = file.type === "application/pdf";
     throw new Error(
-      `${label} is too large (max ${Math.round(max / MB)}MB).`,
+      `${label} is too large (${Math.round(file.size / 1024)}KB, max ${Math.round(
+        MAX_UPLOAD_BYTES / 1024,
+      )}KB).${
+        isPdf
+          ? " PDFs can't be compressed automatically — please take a photo of the document instead."
+          : " Please choose a smaller image."
+      }`,
     );
   }
 
@@ -117,8 +132,56 @@ function validateFile(
 }
 
 /**
+ * Last-resort shrink. Photos are normally already compressed at the moment the
+ * user picks them (see PhotoUpload / the players form), so this is a
+ * no-op for them. It only does work for a file that slipped through oversized,
+ * which keeps us from re-encoding — and degrading — an already-small image.
+ */
+async function ensureUnderCap(
+  file: File,
+  kind: "photo" | "document",
+): Promise<File> {
+  if (file.size <= MAX_UPLOAD_BYTES) return file;
+  return kind === "photo"
+    ? compressPhoto(file)
+    : compressDocumentImage(file);
+}
+
+/**
+ * Storage failures that will never succeed on a retry, so retrying just wastes
+ * the operator's time. Everything NOT matched here is treated as transient.
+ *
+ * That default is deliberate: the cost of retrying a permanent error is a couple
+ * of wasted seconds, whereas the cost of *not* retrying a transient one is
+ * losing a half-entered team. The asymmetry says retry unless we're sure.
+ */
+function isPermanentUploadError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("mime type") || // bucket MIME allow-list
+    m.includes("maximum allowed size") || // bucket per-object cap
+    m.includes("already exists") || // upsert:false collision
+    m.includes("duplicate") ||
+    m.includes("row-level security") || // policy refusal
+    m.includes("violates")
+  );
+}
+
+/** Attempts per file, and the base for exponential backoff between them. */
+const UPLOAD_ATTEMPTS = 3;
+const UPLOAD_RETRY_BASE_MS = 400;
+
+/**
  * Upload a validated file/blob and return its storage PATH (not a URL).
  * Use publicUrl (public buckets) or getSignedUrl (private buckets) to read.
+ *
+ * Retries transient failures. WHY: a full team is 38 uploads (18 photos + 18
+ * proof-of-age documents + logo + coach), all typed in at the venue over venue
+ * wifi. A single dropped connection used to abort the whole submission — and
+ * because the registration row is inserted BEFORE the players loop, that left a
+ * team with only some of its players. Observed for real on 2026-08-23: one
+ * upload failed with a bare `fetch failed` while the identical one a second
+ * later succeeded.
  */
 async function uploadToBucket(
   bucket: string,
@@ -128,12 +191,30 @@ async function uploadToBucket(
 ): Promise<string> {
   const resolvedType =
     contentType ?? (body instanceof File ? body.type : undefined) ?? undefined;
-  const { error } = await supabase.storage.from(bucket).upload(path, body, {
-    contentType: resolvedType,
-    upsert: false,
-  });
-  if (error) throw error;
-  return path;
+
+  let lastMessage = `Could not upload to ${bucket}.`;
+
+  for (let attempt = 1; attempt <= UPLOAD_ATTEMPTS; attempt++) {
+    const { error } = await supabase.storage.from(bucket).upload(path, body, {
+      contentType: resolvedType,
+      // The first attempt refuses to overwrite. A retry may be re-sending a
+      // file whose previous attempt actually landed before the connection
+      // dropped, so it has to be allowed to replace it. Safe because every path
+      // is namespaced under a freshly generated registration UUID.
+      upsert: attempt > 1,
+    });
+
+    if (!error) return path;
+
+    lastMessage = errorMessage(error);
+    if (isPermanentUploadError(lastMessage) || attempt === UPLOAD_ATTEMPTS) break;
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, UPLOAD_RETRY_BASE_MS * 2 ** (attempt - 1)),
+    );
+  }
+
+  throw new Error(lastMessage);
 }
 
 function publicUrl(bucket: string, path: string): string {
@@ -142,11 +223,14 @@ function publicUrl(bucket: string, path: string): string {
 
 /**
  * Generate a short-lived signed URL for a PRIVATE bucket object.
- * Use this on the admin/approval side to view consent forms, proof-of-age
- * documents, and payment receipts. Never make these buckets public.
+ *
+ * Only proof-of-age documents live in a private bucket. Nothing else sensitive
+ * is uploaded any more — consent forms are collected on paper and no payment
+ * document exists. Never make this bucket public: it holds minors' identity
+ * documents.
  */
 export async function getSignedUrl(
-  bucket: "consent-forms" | "proof-of-age" | "receipts",
+  bucket: "proof-of-age",
   path: string,
   expiresInSeconds = 3600,
 ): Promise<string> {
@@ -167,30 +251,35 @@ export async function getSignedUrl(
  * without reading anything back, and still thread the id through to the player
  * rows and the confirmation page.
  */
-function newRegistrationId(): string {
+export function newRegistrationId(): string {
   return crypto.randomUUID();
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Submit the entire registration in one shot (single-submit-at-receipt)     */
+/*  Submit the entire registration in one shot                                */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Persist a registration, its players, their documents, the payment receipt,
- * and the roster PDF — all at once, only ever INSERTing (never UPDATE/SELECT),
- * so it works under the locked-down anon RLS policy.
+ * Persist a registration, its players, their proof-of-age documents, and the
+ * roster PDF — all at once, only ever INSERTing (never UPDATE/SELECT), so it
+ * works under the locked-down anon RLS policy.
+ *
+ * This is the whole of what the site does with a registration: save it. There is
+ * no fee, no notification and no approval step — the row lands as
+ * `pending_payment` (a historical column value that now just means "registered")
+ * and everything after that happens off the site.
  *
  * Buckets touched:
  *   - team-logos            PUBLIC   (team logo)
- *   - player-photos         PUBLIC   (player pictures)
- *   - consent-forms         PRIVATE  (path only; signed on demand by admin)
+ *   - player-photos         PUBLIC   (player pictures + coach headshot)
  *   - proof-of-age          PRIVATE  (path only; signed on demand by admin)
- *   - receipts              PRIVATE  (payment receipt path; signed for admin)
  *   - registration-receipts PUBLIC   (downloadable roster PDF)
  */
 export async function submitRegistration(
   data: RegistrationInput,
 ): Promise<SubmitRegistrationResult> {
+  const report = data.onProgress ?? (() => {});
+
   // Resolve tournament slug → id.
   const { data: tournament, error: tourneyError } = await supabase
     .from("tournaments")
@@ -206,47 +295,58 @@ export async function submitRegistration(
   if (players.length === 0)
     throw new Error("Add at least one player before submitting.");
 
+  // Shrink anything still oversized, THEN validate. Order matters: validating
+  // first would reject a large photo we were about to fix.
+  report("Preparing your photos...");
+  const teamLogo = data.team_logo
+    ? await ensureUnderCap(data.team_logo, "photo")
+    : null;
+  const coachPhoto = data.coach_photo
+    ? await ensureUnderCap(data.coach_photo, "photo")
+    : null;
+
+  const prepared = await Promise.all(
+    players.map(async (p) => ({
+      ...p,
+      photo: p.photo ? await ensureUnderCap(p.photo, "photo") : null,
+      proof_of_age: await ensureUnderCap(p.proof_of_age, "document"),
+    })),
+  );
+
   // Validate everything up front so we don't create a half-written record.
-  if (data.team_logo) validateFile(data.team_logo, "image", "Team logo");
-  if (data.coach_photo) validateFile(data.coach_photo, "image", "Coach photo");
-  if (data.receipt_file)
-    validateFile(data.receipt_file, "doc", "Payment receipt");
-  players.forEach((p, i) => {
-    if (p.photo) validateFile(p.photo, "image", `Player ${i + 1} photo`);
-    validateFile(p.consent_form, "doc", `Player ${i + 1} consent form`);
-    validateFile(p.proof_of_age, "doc", `Player ${i + 1} proof of age`);
+  if (teamLogo) validateFile(teamLogo, "image", "Team logo");
+  if (coachPhoto) validateFile(coachPhoto, "image", "Coach photo");
+  prepared.forEach((p, i) => {
+    const who = p.full_name.trim() || `Player ${i + 1}`;
+    if (p.photo) validateFile(p.photo, "image", `${who}'s photo`);
+    validateFile(p.proof_of_age, "doc", `${who}'s proof of age`);
   });
 
-  const regId = newRegistrationId();
+  const regId = data.id ?? newRegistrationId();
 
   // Team logo — PUBLIC bucket (meant to be shown).
+  report("Uploading your details...");
   let teamLogoUrl = "";
-  if (data.team_logo) {
-    const logoPath = `${regId}/logo_${sanitizeFileName(data.team_logo.name)}`;
-    await uploadToBucket("team-logos", logoPath, data.team_logo);
+  if (teamLogo) {
+    const logoPath = `${regId}/logo_${sanitizeFileName(teamLogo.name)}`;
+    await uploadToBucket("team-logos", logoPath, teamLogo);
     teamLogoUrl = publicUrl("team-logos", logoPath);
   }
 
   // Coach passport headshot — PUBLIC. Reuses the player-photos bucket (same kind
   // of person photo, same visibility) so no extra bucket has to be provisioned.
   let coachPhotoUrl = "";
-  if (data.coach_photo) {
-    const coachPath = `${regId}/coach_${sanitizeFileName(data.coach_photo.name)}`;
-    await uploadToBucket("player-photos", coachPath, data.coach_photo);
+  if (coachPhoto) {
+    const coachPath = `${regId}/coach_${sanitizeFileName(coachPhoto.name)}`;
+    await uploadToBucket("player-photos", coachPath, coachPhoto);
     coachPhotoUrl = publicUrl("player-photos", coachPath);
   }
 
-  // Payment receipt — PRIVATE bucket. Store the PATH; admin reads via signed URL.
-  let receiptPath: string | null = null;
-  if (data.receipt_file) {
-    receiptPath = `${regId}/receipt_${sanitizeFileName(data.receipt_file.name)}`;
-    await uploadToBucket("receipts", receiptPath, data.receipt_file);
-  }
-
-  // Roster PDF — PUBLIC bucket (registrant downloads it from confirmation page).
+  // Roster PDF — PUBLIC bucket. The registrant downloads it from the
+  // confirmation page, and the admin page links to the same URL.
   let receiptPdfUrl = "";
   if (data.receipt_pdf_blob) {
-    const pdfPath = `${regId}/receipt.pdf`;
+    const pdfPath = `${regId}/summary.pdf`;
     await uploadToBucket(
       "registration-receipts",
       pdfPath,
@@ -256,14 +356,11 @@ export async function submitRegistration(
     receiptPdfUrl = publicUrl("registration-receipts", pdfPath);
   }
 
-  // A receipt means the registrant has paid and is awaiting manual verification.
-  // No receipt means they haven't reached the payment step yet.
-  const paymentStatus = data.receipt_file
-    ? "pending_verification"
-    : "pending_upload";
-
   // Insert the registration with our client-chosen id — no .select() (anon has
   // no read policy) and no later UPDATE (all client UPDATEs are RLS-blocked).
+  // 'pending_payment' is the only status the anon RLS policy lets us set for a
+  // new row. Read it as "registered": an admin can only move it to 'rejected'
+  // (cancelled) from the admin page.
   const { error: regError } = await supabase.from("registrations").insert([
     {
       id: regId,
@@ -277,16 +374,18 @@ export async function submitRegistration(
       coach_dob: data.coach_dob,
       coach_nationality: data.coach_nationality,
       coach_photo_url: coachPhotoUrl,
-      payment_receipt_path: receiptPath,
       receipt_pdf_url: receiptPdfUrl,
-      payment_status: paymentStatus,
+      payment_status: "pending_payment",
     },
   ]);
 
   if (regError) throw regError;
 
   // Upload each player's files and insert their row, referencing regId.
-  for (const player of players) {
+  let done = 0;
+  for (const player of prepared) {
+    report(`Uploading players (${++done}/${prepared.length})...`);
+
     // Player photo — PUBLIC bucket (shown on squad pages). Optional.
     let photoUrl = "";
     if (player.photo) {
@@ -294,10 +393,6 @@ export async function submitRegistration(
       await uploadToBucket("player-photos", photoPath, player.photo);
       photoUrl = publicUrl("player-photos", photoPath);
     }
-
-    // Consent form — PRIVATE bucket. Store the PATH; read via signed URL.
-    const consentPath = `${regId}/consent_${sanitizeFileName(player.consent_form.name)}`;
-    await uploadToBucket("consent-forms", consentPath, player.consent_form);
 
     // Proof of age — PRIVATE bucket. Store the PATH; read via signed URL.
     const agePath = `${regId}/age_${sanitizeFileName(player.proof_of_age.name)}`;
@@ -312,7 +407,6 @@ export async function submitRegistration(
         position: player.position,
         jersey_number: player.jersey_number ?? null,
         photo_url: photoUrl, // public URL (safe to expose)
-        consent_form_path: consentPath, // private path (sign on demand)
         proof_of_age_path: agePath, // private path (sign on demand)
       },
     ]);

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Lock, AlertCircle } from "lucide-react";
 
 export default function AdminLoginPage() {
@@ -11,7 +10,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
@@ -47,17 +46,6 @@ export default function AdminLoginPage() {
 
   return (
     <div className="relative min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/hero.png"
-          alt=""
-          fill
-          className="object-cover opacity-40"
-          priority
-        />
-      </div>
-
       {/* Card */}
       <div className="w-full max-w-md bg-slate-900/40 border border-white/20 backdrop-blur-xl rounded-2xl p-8 shadow-2xl">
         <div className="flex flex-col items-center mb-8">

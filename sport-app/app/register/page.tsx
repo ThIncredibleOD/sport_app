@@ -11,7 +11,6 @@ export default function RegisterTournament() {
       {/* Background Image */}
       <div
         className="bg-slate-800 absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-        // style={{ backgroundImage: `url('/hero.png')` }}
       />
       {/* Dark Layer */}
       <div className="absolute inset-0 bg-slate-950/50" />

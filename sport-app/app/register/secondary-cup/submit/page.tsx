@@ -1,8 +1,8 @@
-import PaymentFlow from "@/components/PaymentFlow";
+import SubmitFlow from "@/components/SubmitFlow";
 
-export default function SecondaryCupPaymentPage() {
+export default function SecondaryCupSubmitPage() {
   return (
-    <PaymentFlow
+    <SubmitFlow
       tournamentSlug="secondary-cup"
       tournamentName="The Nathaniel Idowu Secondary Cup"
       logoSrc="/secondary.png"

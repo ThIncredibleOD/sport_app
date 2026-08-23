@@ -7,7 +7,7 @@ export default function SecondaryCupReviewPage() {
       logoAlt="The Nathaniel Idowu Secondary Football League"
       tournamentName="The Nathaniel Idowu Secondary Cup"
       editRoute="/register/secondary-cup/players"
-      paymentRoute="/register/secondary-cup/payment"
+      submitRoute="/register/secondary-cup/submit"
     />
   );
 }

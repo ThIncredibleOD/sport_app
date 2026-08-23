@@ -7,7 +7,7 @@ export default function LeagueReviewPage() {
       logoAlt="The Nathaniel Idowu Under 16 Football League"
       tournamentName="The Nathaniel Idowu Under 16 Football League"
       editRoute="/register/league/players"
-      paymentRoute="/register/league/payment"
+      submitRoute="/register/league/submit"
     />
   );
 }
