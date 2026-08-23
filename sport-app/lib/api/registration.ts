@@ -167,9 +167,28 @@ function isPermanentUploadError(message: string): boolean {
   );
 }
 
-/** Attempts per file, and the base for exponential backoff between them. */
-const UPLOAD_ATTEMPTS = 3;
-const UPLOAD_RETRY_BASE_MS = 400;
+/** Attempts per network call, and the base for exponential backoff between them. */
+const NETWORK_ATTEMPTS = 3;
+const RETRY_BASE_MS = 400;
+
+function retryDelay(attempt: number): Promise<void> {
+  return new Promise((resolve) =>
+    setTimeout(resolve, RETRY_BASE_MS * 2 ** (attempt - 1)),
+  );
+}
+
+/**
+ * True for PostgREST's "0 rows" error, which `.single()` raises when a filter
+ * matches nothing. That's a definitive answer from a working database, not a
+ * failure to reach one — so it must not be retried or reported as a fault.
+ */
+function isNoRows(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: string }).code === "PGRST116"
+  );
+}
 
 /**
  * Upload a validated file/blob and return its storage PATH (not a URL).
@@ -194,7 +213,7 @@ async function uploadToBucket(
 
   let lastMessage = `Could not upload to ${bucket}.`;
 
-  for (let attempt = 1; attempt <= UPLOAD_ATTEMPTS; attempt++) {
+  for (let attempt = 1; attempt <= NETWORK_ATTEMPTS; attempt++) {
     const { error } = await supabase.storage.from(bucket).upload(path, body, {
       contentType: resolvedType,
       // The first attempt refuses to overwrite. A retry may be re-sending a
@@ -207,11 +226,9 @@ async function uploadToBucket(
     if (!error) return path;
 
     lastMessage = errorMessage(error);
-    if (isPermanentUploadError(lastMessage) || attempt === UPLOAD_ATTEMPTS) break;
+    if (isPermanentUploadError(lastMessage) || attempt === NETWORK_ATTEMPTS) break;
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, UPLOAD_RETRY_BASE_MS * 2 ** (attempt - 1)),
-    );
+    await retryDelay(attempt);
   }
 
   throw new Error(lastMessage);
@@ -280,15 +297,38 @@ export async function submitRegistration(
 ): Promise<SubmitRegistrationResult> {
   const report = data.onProgress ?? (() => {});
 
-  // Resolve tournament slug → id.
-  const { data: tournament, error: tourneyError } = await supabase
-    .from("tournaments")
-    .select("id")
-    .eq("slug", data.tournament_slug)
-    .single();
+  // Resolve tournament slug → id. Retried: this is the FIRST network call of the
+  // whole submission, so a transient failure here used to abort a fully-typed
+  // registration with the message "Invalid tournament selected" — which sent you
+  // hunting for a bad slug when the connection had simply dropped.
+  let tournament: { id: string } | null = null;
+  let tourneyError: unknown = null;
 
-  if (tourneyError || !tournament)
-    throw new Error("Invalid tournament selected.");
+  for (let attempt = 1; attempt <= NETWORK_ATTEMPTS; attempt++) {
+    const result = await supabase
+      .from("tournaments")
+      .select("id")
+      .eq("slug", data.tournament_slug)
+      .single();
+
+    tournament = result.data;
+    tourneyError = result.error;
+
+    // PGRST116 = "0 rows" — a real answer, not a failure. Don't retry it.
+    if (!tourneyError || isNoRows(tourneyError)) break;
+    if (attempt < NETWORK_ATTEMPTS) await retryDelay(attempt);
+  }
+
+  if (tourneyError && !isNoRows(tourneyError)) {
+    throw new Error(
+      `Could not reach the database to confirm the tournament: ${errorMessage(tourneyError)}. Nothing was saved — check the connection and submit again.`,
+    );
+  }
+  if (!tournament) {
+    throw new Error(
+      `Invalid tournament selected: no tournament has the slug "${data.tournament_slug}".`,
+    );
+  }
 
   // Only submit players that were actually filled in.
   const players = data.players.filter((p) => p.full_name.trim().length > 0);
