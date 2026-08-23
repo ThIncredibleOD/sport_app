@@ -12,7 +12,11 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
-import { useRegister, createEmptyPlayer } from "@/context/sportContext";
+import {
+  useRegister,
+  createEmptyPlayer,
+  playerBlockingGaps,
+} from "@/context/sportContext";
 import PhotoUpload from "@/components/PhotoUpload";
 import { compressDocumentImage, kb, MAX_UPLOAD_BYTES } from "@/lib/images";
 
@@ -31,6 +35,16 @@ export default function PlayerRegistration() {
   const total = players.length;
   const isLast = currentIndex === total - 1;
   const currentPlayer = players[currentIndex];
+
+  // A squad is rarely 18 deep. Without this, the only way out of the carousel is
+  // the "Review Registration" label on the LAST card, so an 11-player team meant
+  // clicking "Add Player" through 7 empty ones — with a queue waiting. Offer the
+  // exit as soon as one player is complete, using the same rule the review and
+  // submit screens apply, so anything that can leave here can also be submitted.
+  const completedCount = players.filter(
+    (p) => p.fullName.trim().length > 0 && playerBlockingGaps(p).length === 0,
+  ).length;
+  const canReview = completedCount > 0;
 
   const handlePrevPlayer = () => {
     if (currentIndex > 0) setCurrentIndex((prev) => prev - 1);
@@ -368,6 +382,20 @@ export default function PlayerRegistration() {
               )}
               <span>{isLast ? "Review Registration" : "Add Player"}</span>
             </button>
+
+            {canReview && !isLast && (
+              <button
+                type="button"
+                onClick={() => router.push(REVIEW_ROUTE)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-[#16a34a]/50 bg-[#16a34a]/10 py-2.5 px-4 text-xs font-semibold text-emerald-200 hover:bg-[#16a34a]/20 transition-all"
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span>
+                  Review Registration ({completedCount} player
+                  {completedCount === 1 ? "" : "s"})
+                </span>
+              </button>
+            )}
 
             <button
               type="button"

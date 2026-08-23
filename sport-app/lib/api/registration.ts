@@ -43,6 +43,44 @@ export interface RegistrationInput {
   receipt_pdf_blob?: Blob | null;
   /** Optional progress reporter so the UI can narrate a slow submit. */
   onProgress?: (message: string) => void;
+  /**
+   * Optional bookkeeping so a retry picks up where the last attempt stopped.
+   * Pass the SAME object (see `newSubmitProgress`) on every retry of the same
+   * registration and reuse the same `id`. See `SubmitProgress` for why.
+   */
+  progress?: SubmitProgress;
+}
+
+/**
+ * What a previous attempt at this registration already got done.
+ *
+ * WHY THIS EXISTS: a full team is 38 uploads plus 19 inserts, typed in at the
+ * venue over venue wifi, and the registration row is written BEFORE the players
+ * loop. Without this, a connection drop at player 7 of 11 left 6 players saved,
+ * and pressing Submit again allocated a NEW id — so the database ended up with
+ * one orphaned 6-player team and one complete one, with no way to tell them
+ * apart later. The anon role has no UPDATE or SELECT rights, so the client
+ * cannot repair or even inspect that state afterwards.
+ *
+ * Carrying this across retries makes a second Submit resume instead of
+ * duplicate: finished uploads are skipped, the registration row is not
+ * re-inserted, and only the players that never landed are sent.
+ */
+export interface SubmitProgress {
+  /** Storage keys ("bucket/path") confirmed uploaded. */
+  uploaded: Set<string>;
+  /** True once the `registrations` row is committed. */
+  registrationSaved: boolean;
+  /** Indexes into the filled-player list whose row is committed. */
+  playersSaved: Set<number>;
+}
+
+export function newSubmitProgress(): SubmitProgress {
+  return {
+    uploaded: new Set<string>(),
+    registrationSaved: false,
+    playersSaved: new Set<number>(),
+  };
 }
 
 export interface SubmitRegistrationResult {
@@ -148,14 +186,17 @@ async function ensureUnderCap(
 }
 
 /**
- * Storage failures that will never succeed on a retry, so retrying just wastes
- * the operator's time. Everything NOT matched here is treated as transient.
+ * Failures that will never succeed on a retry, so retrying just wastes the
+ * operator's time. Everything NOT matched here is treated as transient.
  *
  * That default is deliberate: the cost of retrying a permanent error is a couple
  * of wasted seconds, whereas the cost of *not* retrying a transient one is
  * losing a half-entered team. The asymmetry says retry unless we're sure.
+ *
+ * Covers both storage and database failures — a bucket's MIME refusal and a
+ * "violates row-level security policy" are equally final.
  */
-function isPermanentUploadError(message: string): boolean {
+function isPermanentFailure(message: string): boolean {
   const m = message.toLowerCase();
   return (
     m.includes("mime type") || // bucket MIME allow-list
@@ -191,6 +232,46 @@ function isNoRows(error: unknown): boolean {
 }
 
 /**
+ * Postgres unique-violation (23505). On `registrations` this can only mean our
+ * own earlier attempt already committed the row — the id is a UUID this client
+ * generated and nobody else has it — so it counts as success, not failure.
+ */
+function isDuplicateKey(error: unknown): boolean {
+  if (typeof error === "undefined" || error === null) return false;
+  if (typeof error !== "object") return false;
+  const e = error as { code?: string; message?: string };
+  return e.code === "23505" || /duplicate key/i.test(e.message ?? "");
+}
+
+/**
+ * INSERT one row, retrying transient failures.
+ *
+ * No `.select()` anywhere: the anon role has no read policy, so asking for the
+ * row back would fail even though the write succeeded.
+ */
+async function insertWithRetry(
+  table: "registrations" | "players",
+  row: Record<string, unknown>,
+  { duplicateIsSuccess = false }: { duplicateIsSuccess?: boolean } = {},
+): Promise<void> {
+  let lastError: unknown = new Error(`Could not save to ${table}.`);
+
+  for (let attempt = 1; attempt <= NETWORK_ATTEMPTS; attempt++) {
+    const { error } = await supabase.from(table).insert([row]);
+    if (!error) return;
+    if (duplicateIsSuccess && isDuplicateKey(error)) return;
+
+    lastError = error;
+    if (isPermanentFailure(errorMessage(error)) || attempt === NETWORK_ATTEMPTS)
+      break;
+
+    await retryDelay(attempt);
+  }
+
+  throw lastError;
+}
+
+/**
  * Upload a validated file/blob and return its storage PATH (not a URL).
  * Use publicUrl (public buckets) or getSignedUrl (private buckets) to read.
  *
@@ -207,7 +288,13 @@ async function uploadToBucket(
   path: string,
   body: File | Blob,
   contentType?: string,
+  progress?: SubmitProgress,
 ): Promise<string> {
+  // Already sent on an earlier attempt at this same registration — re-sending it
+  // would just spend venue bandwidth on a file that is already in the bucket.
+  const key = `${bucket}/${path}`;
+  if (progress?.uploaded.has(key)) return path;
+
   const resolvedType =
     contentType ?? (body instanceof File ? body.type : undefined) ?? undefined;
 
@@ -223,10 +310,13 @@ async function uploadToBucket(
       upsert: attempt > 1,
     });
 
-    if (!error) return path;
+    if (!error) {
+      progress?.uploaded.add(key);
+      return path;
+    }
 
     lastMessage = errorMessage(error);
-    if (isPermanentUploadError(lastMessage) || attempt === NETWORK_ATTEMPTS) break;
+    if (isPermanentFailure(lastMessage) || attempt === NETWORK_ATTEMPTS) break;
 
     await retryDelay(attempt);
   }
@@ -363,13 +453,14 @@ export async function submitRegistration(
   });
 
   const regId = data.id ?? newRegistrationId();
+  const progress = data.progress;
 
   // Team logo — PUBLIC bucket (meant to be shown).
   report("Uploading your details...");
   let teamLogoUrl = "";
   if (teamLogo) {
     const logoPath = `${regId}/logo_${sanitizeFileName(teamLogo.name)}`;
-    await uploadToBucket("team-logos", logoPath, teamLogo);
+    await uploadToBucket("team-logos", logoPath, teamLogo, undefined, progress);
     teamLogoUrl = publicUrl("team-logos", logoPath);
   }
 
@@ -378,7 +469,13 @@ export async function submitRegistration(
   let coachPhotoUrl = "";
   if (coachPhoto) {
     const coachPath = `${regId}/coach_${sanitizeFileName(coachPhoto.name)}`;
-    await uploadToBucket("player-photos", coachPath, coachPhoto);
+    await uploadToBucket(
+      "player-photos",
+      coachPath,
+      coachPhoto,
+      undefined,
+      progress,
+    );
     coachPhotoUrl = publicUrl("player-photos", coachPath);
   }
 
@@ -392,6 +489,7 @@ export async function submitRegistration(
       pdfPath,
       data.receipt_pdf_blob,
       "application/pdf",
+      progress,
     );
     receiptPdfUrl = publicUrl("registration-receipts", pdfPath);
   }
@@ -401,45 +499,65 @@ export async function submitRegistration(
   // 'pending_payment' is the only status the anon RLS policy lets us set for a
   // new row. Read it as "registered": an admin can only move it to 'rejected'
   // (cancelled) from the admin page.
-  const { error: regError } = await supabase.from("registrations").insert([
-    {
-      id: regId,
-      tournament_id: tournament.id,
-      contact_name: data.contact_name,
-      contact_phone: data.contact_phone,
-      contact_email: data.contact_email,
-      academy_name: data.academy_name,
-      team_logo_url: teamLogoUrl,
-      coach_full_name: data.coach_full_name,
-      coach_dob: data.coach_dob,
-      coach_nationality: data.coach_nationality,
-      coach_photo_url: coachPhotoUrl,
-      receipt_pdf_url: receiptPdfUrl,
-      payment_status: "pending_payment",
-    },
-  ]);
-
-  if (regError) throw regError;
+  //
+  // Skipped outright if a previous attempt already committed it. A duplicate-key
+  // error counts as success for the same reason — see isDuplicateKey.
+  if (!progress?.registrationSaved) {
+    await insertWithRetry(
+      "registrations",
+      {
+        id: regId,
+        tournament_id: tournament.id,
+        contact_name: data.contact_name,
+        contact_phone: data.contact_phone,
+        contact_email: data.contact_email,
+        academy_name: data.academy_name,
+        team_logo_url: teamLogoUrl,
+        coach_full_name: data.coach_full_name,
+        coach_dob: data.coach_dob,
+        coach_nationality: data.coach_nationality,
+        coach_photo_url: coachPhotoUrl,
+        receipt_pdf_url: receiptPdfUrl,
+        payment_status: "pending_payment",
+      },
+      { duplicateIsSuccess: true },
+    );
+    if (progress) progress.registrationSaved = true;
+  }
 
   // Upload each player's files and insert their row, referencing regId.
-  let done = 0;
-  for (const player of prepared) {
-    report(`Uploading players (${++done}/${prepared.length})...`);
+  for (let index = 0; index < prepared.length; index++) {
+    if (progress?.playersSaved.has(index)) continue;
 
-    // Player photo — PUBLIC bucket (shown on squad pages). Optional.
-    let photoUrl = "";
-    if (player.photo) {
-      const photoPath = `${regId}/photo_${sanitizeFileName(player.photo.name)}`;
-      await uploadToBucket("player-photos", photoPath, player.photo);
-      photoUrl = publicUrl("player-photos", photoPath);
-    }
+    const player = prepared[index];
+    report(`Uploading players (${index + 1}/${prepared.length})...`);
 
-    // Proof of age — PRIVATE bucket. Store the PATH; read via signed URL.
-    const agePath = `${regId}/age_${sanitizeFileName(player.proof_of_age.name)}`;
-    await uploadToBucket("proof-of-age", agePath, player.proof_of_age);
+    try {
+      // Player photo — PUBLIC bucket (shown on squad pages). Optional.
+      let photoUrl = "";
+      if (player.photo) {
+        const photoPath = `${regId}/photo_${sanitizeFileName(player.photo.name)}`;
+        await uploadToBucket(
+          "player-photos",
+          photoPath,
+          player.photo,
+          undefined,
+          progress,
+        );
+        photoUrl = publicUrl("player-photos", photoPath);
+      }
 
-    const { error: playerErr } = await supabase.from("players").insert([
-      {
+      // Proof of age — PRIVATE bucket. Store the PATH; read via signed URL.
+      const agePath = `${regId}/age_${sanitizeFileName(player.proof_of_age.name)}`;
+      await uploadToBucket(
+        "proof-of-age",
+        agePath,
+        player.proof_of_age,
+        undefined,
+        progress,
+      );
+
+      await insertWithRetry("players", {
         registration_id: regId,
         full_name: player.full_name,
         dob: player.dob,
@@ -448,10 +566,20 @@ export async function submitRegistration(
         jersey_number: player.jersey_number ?? null,
         photo_url: photoUrl, // public URL (safe to expose)
         proof_of_age_path: agePath, // private path (sign on demand)
-      },
-    ]);
+      });
 
-    if (playerErr) throw playerErr;
+      progress?.playersSaved.add(index);
+    } catch (error) {
+      // Tell the operator exactly where it stopped and that pressing Submit
+      // again continues from here rather than starting a second team. Without
+      // this they would go back, re-enter, and end up with a duplicate.
+      const savedCount = progress?.playersSaved.size ?? index;
+      throw new Error(
+        `Saved ${savedCount} of ${prepared.length} players, then failed on ${
+          player.full_name.trim() || `player ${index + 1}`
+        }: ${errorMessage(error)}. Nothing already saved was lost — press Submit again to continue from this player.`,
+      );
+    }
   }
 
   return { id: regId, receipt_pdf_url: receiptPdfUrl };

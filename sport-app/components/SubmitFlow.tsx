@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import {
   newRegistrationId,
+  newSubmitProgress,
   submitRegistration,
   type PlayerInput,
 } from "@/lib/api/registration";
@@ -55,6 +56,17 @@ export default function SubmitFlow({
   // means the submit didn't come from a human, so we drop it silently rather
   // than showing an error that would tell a scripted client what went wrong.
   const [honeypot, setHoneypot] = useState("");
+  // True once an attempt got part-way, so the button can promise a resume
+  // instead of implying a fresh start (which is what the operator will fear).
+  const [resumable, setResumable] = useState(false);
+
+  // Held across retries of THIS page, deliberately in refs rather than state:
+  // pressing Submit after a failure must continue the same registration, not
+  // start a second one. Both die when the component unmounts, so navigating away
+  // and coming back correctly begins a fresh registration instead of resuming
+  // one whose details may since have been edited.
+  const regIdRef = useRef<string | null>(null);
+  const progressRef = useRef(newSubmitProgress());
 
   const filledPlayers = players.filter((p) => p.fullName.trim().length > 0);
 
@@ -94,8 +106,11 @@ export default function SubmitFlow({
     try {
       // 1. Build the roster summary PDF from the in-memory File objects.
       //    The id is allocated HERE, before the PDF, so the printed summary can
-      //    carry the same reference number the team will be looked up by.
-      const regId = newRegistrationId();
+      //    carry the same reference number the team will be looked up by. On a
+      //    retry the previous id is reused, so the reference on any summary
+      //    already generated still matches the row.
+      regIdRef.current ??= newRegistrationId();
+      const regId = regIdRef.current;
       setStatusText("Generating your summary...");
       const submittedAtLabel = new Date().toLocaleString("en-GB", {
         dateStyle: "medium",
@@ -149,6 +164,7 @@ export default function SubmitFlow({
         coach_photo: headCoach.passport,
         players: playerInputs,
         receipt_pdf_blob: pdfBlob,
+        progress: progressRef.current,
         onProgress: setStatusText,
       });
 
@@ -164,6 +180,8 @@ export default function SubmitFlow({
           ? error.message
           : "Failed to submit registration. Please try again.";
       setErrorMessage(message);
+      const p = progressRef.current;
+      setResumable(p.registrationSaved || p.uploaded.size > 0);
       setLoading(false);
     }
   };
@@ -204,6 +222,13 @@ export default function SubmitFlow({
         {errorMessage && (
           <div className="mt-4 p-2.5 rounded bg-red-500/20 border border-red-500/40 text-xs text-red-200 text-center relative z-10">
             {errorMessage}
+            {resumable && (
+              <p className="mt-2 font-semibold text-red-100">
+                Press &ldquo;Continue Submitting&rdquo; — it carries on from where
+                it stopped. Do not go back to Review: that starts a second,
+                separate registration for the same team.
+              </p>
+            )}
           </div>
         )}
 
@@ -284,7 +309,11 @@ export default function SubmitFlow({
                 </>
               ) : (
                 <>
-                  <span>Submit Registration</span>
+                  <span>
+                    {resumable
+                      ? "Continue Submitting"
+                      : "Submit Registration"}
+                  </span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </>
               )}

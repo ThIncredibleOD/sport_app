@@ -9,7 +9,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 
 const NEXT_ROUTE = "/register/unity-cup/academy-squad";
 const LOGO_SRC = "/unity.png";
-const LOGO_ALT = "The Nathaniel Idowu Unity Football League";
+const LOGO_ALT = "The Nathaniel Idowu Unity Cup";
 
 export default function AccountProfile() {
   const { academyProfile, setAcademyProfile } = useRegister();

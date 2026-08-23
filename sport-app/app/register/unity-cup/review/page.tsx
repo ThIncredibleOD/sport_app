@@ -4,7 +4,7 @@ export default function UnityCupReviewPage() {
   return (
     <RegistrationReview
       logoSrc="/unity.png"
-      logoAlt="The Nathaniel Idowu Unity Football League"
+      logoAlt="The Nathaniel Idowu Unity Cup"
       tournamentName="The Nathaniel Idowu Unity Cup"
       editRoute="/register/unity-cup/players"
       submitRoute="/register/unity-cup/submit"

@@ -90,7 +90,7 @@ export default function Events() {
           <EventCard
             title="Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos"
             date="July 12 2026"
-            description="Captivating prices to be won by participants."
+            description="Captivating prizes to be won by participants."
             imageSrc="/news02.png"
             linkHref="https://mediatoday.ng/nathaniel-idowu-foundation-to-host-maiden-summer-camp-for-young-athletes-in-lagos/
 "

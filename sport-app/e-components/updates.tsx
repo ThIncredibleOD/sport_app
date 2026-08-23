@@ -150,7 +150,7 @@ export default function Updates() {
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">July 12 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-                Captivating prices to be won by participants.
+                Captivating prizes to be won by participants.
               </p>
               <a
                 href="https://mediatoday.ng/nathaniel-idowu-foundation-to-host-maiden-summer-camp-for-young-athletes-in-lagos/"
