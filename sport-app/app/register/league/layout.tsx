@@ -11,7 +11,7 @@ import {
 } from "@/context/sportContext";
 import { useState } from "react";
 
-const PLAYER_COUNT = 18;
+const PLAYER_COUNT = 25;
 
 export default function LeagueLayout({
   children,
