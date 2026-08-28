@@ -20,7 +20,7 @@ import {
 import PhotoUpload from "@/components/PhotoUpload";
 import { compressDocumentImage, kb, MAX_UPLOAD_BYTES } from "@/lib/images";
 
-const BACK_ROUTE = "/register/unity-cup/academy-squad";
+const BACK_ROUTE = "/register/unity-cup/medics";
 const REVIEW_ROUTE = "/register/unity-cup/review";
 const LOGO_SRC = "/unity.png";
 const LOGO_ALT = "The Nathaniel Idowu Unity Cup";

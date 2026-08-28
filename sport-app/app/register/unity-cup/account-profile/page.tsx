@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useRegister } from "@/context/sportContext";
 import PhotoUpload from "@/components/PhotoUpload";
 
-const NEXT_ROUTE = "/register/unity-cup/academy-squad";
+const NEXT_ROUTE = "/register/unity-cup/team-manager";
 const LOGO_SRC = "/unity.png";
 const LOGO_ALT = "The Nathaniel Idowu Unity Cup";
 

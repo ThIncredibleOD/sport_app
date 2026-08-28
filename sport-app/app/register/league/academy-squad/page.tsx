@@ -7,8 +7,8 @@ import { useRegister } from "@/context/sportContext";
 import Image from "next/image";
 import PhotoUpload from "@/components/PhotoUpload";
 
-const BACK_ROUTE = "/register/league/account-profile";
-const NEXT_ROUTE = "/register/league/players";
+const BACK_ROUTE = "/register/league/team-manager";
+const NEXT_ROUTE = "/register/league/assistant-coach";
 const LOGO_SRC = "/under1.png";
 const LOGO_ALT = "The Nathaniel Idowu Under 16 Football League";
 
@@ -154,7 +154,7 @@ export default function AcademySquadRegistration() {
               type="submit"
               className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2 px-4 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#15803d] shadow-lg shadow-emerald-950/50 focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:ring-offset-2 focus:ring-offset-[#0f172a]"
             >
-              <span>Continue to Players</span>
+              <span>Continue to Assistant Coach</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>

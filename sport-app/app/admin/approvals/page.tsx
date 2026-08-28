@@ -49,10 +49,40 @@ interface Registration {
   coach_full_name: string | null;
   coach_dob: string | null;
   coach_nationality: string | null;
+  /** PUBLIC bucket URL — safe to render directly. */
+  coach_photo_url: string | null;
+  /* The team's other officials. All nullable: each of these people is optional
+     to register, so a team may legitimately have none of them. The `*_photo_url`
+     columns are PUBLIC bucket URLs like the coach's, not private paths. */
+  manager_full_name: string | null;
+  manager_dob: string | null;
+  manager_nationality: string | null;
+  manager_photo_url: string | null;
+  assistant_coach_full_name: string | null;
+  assistant_coach_dob: string | null;
+  assistant_coach_nationality: string | null;
+  assistant_coach_photo_url: string | null;
+  medic1_full_name: string | null;
+  medic1_dob: string | null;
+  medic1_nationality: string | null;
+  medic1_photo_url: string | null;
+  medic2_full_name: string | null;
+  medic2_dob: string | null;
+  medic2_nationality: string | null;
+  medic2_photo_url: string | null;
   receipt_pdf_url: string;
   created_at: string;
   tournaments: { name: string; slug: string } | null;
   players: Player[];
+}
+
+/** One row in the staff list: the head coach or one of the four officials. */
+interface StaffMember {
+  role: string;
+  name: string;
+  nationality: string | null;
+  dob: string | null;
+  photoUrl: string | null;
 }
 
 /**
@@ -78,6 +108,104 @@ function formatDate(value: string | null): string {
     month: "short",
     year: "numeric",
   });
+}
+
+/**
+ * Head coach plus the four optional officials, in the order the form collects
+ * them, skipping anyone the team didn't name.
+ *
+ * Rows written before the officials existed have NULL in every one of those
+ * columns, so they simply come back as the head coach alone — no migration of
+ * old data needed.
+ */
+function staffOf(reg: Registration): StaffMember[] {
+  return [
+    {
+      role: "Team manager",
+      name: reg.manager_full_name,
+      nationality: reg.manager_nationality,
+      dob: reg.manager_dob,
+      photoUrl: reg.manager_photo_url,
+    },
+    {
+      role: "Head coach",
+      name: reg.coach_full_name,
+      nationality: reg.coach_nationality,
+      dob: reg.coach_dob,
+      photoUrl: reg.coach_photo_url,
+    },
+    {
+      role: "Assistant coach",
+      name: reg.assistant_coach_full_name,
+      nationality: reg.assistant_coach_nationality,
+      dob: reg.assistant_coach_dob,
+      photoUrl: reg.assistant_coach_photo_url,
+    },
+    {
+      role: "Medic 1",
+      name: reg.medic1_full_name,
+      nationality: reg.medic1_nationality,
+      dob: reg.medic1_dob,
+      photoUrl: reg.medic1_photo_url,
+    },
+    {
+      role: "Medic 2",
+      name: reg.medic2_full_name,
+      nationality: reg.medic2_nationality,
+      dob: reg.medic2_dob,
+      photoUrl: reg.medic2_photo_url,
+    },
+  ].flatMap((entry) =>
+    entry.name?.trim() ? [{ ...entry, name: entry.name.trim() }] : [],
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Staff list                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The team's staff on the summary card: head coach plus whichever officials were
+ * entered. Renders nothing at all when a team has no staff on record, so an
+ * older registration's card looks exactly as it did before.
+ *
+ * Thumbnails come from the PUBLIC player-photos bucket, so they render directly
+ * — unlike a player's proof of age, which is private and has to be signed.
+ */
+function StaffList({ reg }: { reg: Registration }) {
+  const staff = staffOf(reg);
+  if (staff.length === 0) return null;
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {staff.map((member) => (
+        <div key={member.role} className="flex items-center gap-2 min-w-0">
+          {member.photoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={member.photoUrl}
+              alt=""
+              className="h-9 w-9 shrink-0 rounded-md object-cover border border-white/10"
+            />
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-slate-900">
+              <UserRound className="h-4 w-4 text-slate-600" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-xs font-medium text-slate-200">
+              {member.name}
+            </p>
+            <p className="truncate text-[11px] text-slate-500">
+              {member.role}
+              {member.nationality ? ` · ${member.nationality}` : ""}
+              {member.dob ? ` · born ${formatDate(member.dob)}` : ""}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -412,20 +540,7 @@ export default function AdminRegistrationsPage() {
                         </div>
                       </div>
 
-                      {reg.coach_full_name && (
-                        <p className="text-xs text-slate-400">
-                          Head coach:{" "}
-                          <span className="text-slate-300">
-                            {reg.coach_full_name}
-                          </span>
-                          {reg.coach_nationality
-                            ? ` · ${reg.coach_nationality}`
-                            : ""}
-                          {reg.coach_dob
-                            ? ` · born ${formatDate(reg.coach_dob)}`
-                            : ""}
-                        </p>
-                      )}
+                      <StaffList reg={reg} />
                     </div>
 
                     {/* Right: actions */}

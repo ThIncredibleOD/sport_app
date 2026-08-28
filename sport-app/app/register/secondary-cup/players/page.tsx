@@ -20,7 +20,7 @@ import {
 import PhotoUpload from "@/components/PhotoUpload";
 import { compressDocumentImage, kb, MAX_UPLOAD_BYTES } from "@/lib/images";
 
-const BACK_ROUTE = "/register/secondary-cup/academy-squad";
+const BACK_ROUTE = "/register/secondary-cup/medics";
 const REVIEW_ROUTE = "/register/secondary-cup/review";
 const LOGO_SRC = "/secondary.png";
 const LOGO_ALT = "The Nathaniel Idowu Secondary Football League";

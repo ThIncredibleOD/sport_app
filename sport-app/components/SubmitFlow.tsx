@@ -13,11 +13,17 @@ import {
   newRegistrationId,
   newSubmitProgress,
   submitRegistration,
+  type OfficialInput,
   type PlayerInput,
 } from "@/lib/api/registration";
 import { registrationReference } from "@/lib/reference";
 import { generateRegistrationReceipt } from "@/lib/pdf/generateReceipt";
-import { useRegister, playerBlockingGaps } from "@/context/sportContext";
+import {
+  useRegister,
+  officialBlockingGaps,
+  playerBlockingGaps,
+  type Official,
+} from "@/context/sportContext";
 
 type Props = {
   /** Must match the `slug` column in the `tournaments` table. */
@@ -30,6 +36,19 @@ type Props = {
   /** Where to land after a successful submission. Gets ?reg= & ?pdf= appended. */
   confirmationRoute: string;
 };
+
+/**
+ * Context shape -> API shape for a team official. Blank fields are passed
+ * through unchanged: `submitRegistration` is the single place that decides what
+ * a nameless official means (four NULLs and no upload), so that rule isn't
+ * duplicated per flow.
+ */
+const toOfficialInput = (person: Official): OfficialInput => ({
+  full_name: person.fullName,
+  dob: person.dateOfBirth,
+  nationality: person.nationality,
+  photo: person.passport,
+});
 
 /**
  * Final step of a registration: confirm and submit.
@@ -47,7 +66,15 @@ export default function SubmitFlow({
   confirmationRoute,
 }: Props) {
   const router = useRouter();
-  const { academyProfile, headCoach, players, resetForm } = useRegister();
+  const {
+    academyProfile,
+    headCoach,
+    teamManager,
+    assistantCoach,
+    medics,
+    players,
+    resetForm,
+  } = useRegister();
 
   const [loading, setLoading] = useState(false);
   const [statusText, setStatusText] = useState("Submitting Registration...");
@@ -80,13 +107,40 @@ export default function SubmitFlow({
   if (!academyProfile.contactNumber.trim()) academyGaps.push("contact number");
   if (!academyProfile.email.trim()) academyGaps.push("email");
   if (!headCoach.fullName.trim()) academyGaps.push("head coach name");
+  // coach_dob is a NOT NULL date column, so an empty one would fail at insert
+  // time with a raw Postgres error rather than something the operator can act
+  // on. Caught here instead, same "complete if named" rule as the officials.
+  if (!headCoach.dateOfBirth.trim())
+    academyGaps.push("head coach date of birth");
+  if (!headCoach.nationality.trim()) academyGaps.push("head coach nationality");
+
+  // Team officials in display order. Every one of them is optional — an entry
+  // with no name is simply absent — so this list is derived once and reused by
+  // the gate below, the PDF and the insert, and they cannot drift apart.
+  const officialEntries = [
+    { role: "Team Manager", person: teamManager },
+    { role: "Assistant Coach", person: assistantCoach },
+    ...medics.map((medic, index) => ({
+      role: `Medic ${index + 1}`,
+      person: medic,
+    })),
+  ];
+  const namedOfficials = officialEntries.filter((entry) =>
+    entry.person.fullName.trim(),
+  );
+  const officialsWithGaps = officialEntries.filter(
+    (entry) => officialBlockingGaps(entry.person).length > 0,
+  ).length;
 
   const playersWithGaps = filledPlayers.filter(
     (p) => playerBlockingGaps(p).length > 0,
   ).length;
   const hasNoPlayers = filledPlayers.length === 0;
   const isComplete =
-    !hasNoPlayers && playersWithGaps === 0 && academyGaps.length === 0;
+    !hasNoPlayers &&
+    playersWithGaps === 0 &&
+    officialsWithGaps === 0 &&
+    academyGaps.length === 0;
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -127,6 +181,12 @@ export default function SubmitFlow({
         coachDob: headCoach.dateOfBirth,
         coachNationality: headCoach.nationality,
         coachPhoto: headCoach.passport,
+        officials: namedOfficials.map(({ role, person }) => ({
+          role,
+          name: person.fullName,
+          dob: person.dateOfBirth,
+          nationality: person.nationality,
+        })),
         players: filledPlayers.map((p) => ({
           full_name: p.fullName,
           dob: p.dateOfBirth,
@@ -162,6 +222,9 @@ export default function SubmitFlow({
         coach_nationality: headCoach.nationality,
         team_logo: academyProfile.logo,
         coach_photo: headCoach.passport,
+        team_manager: toOfficialInput(teamManager),
+        assistant_coach: toOfficialInput(assistantCoach),
+        medics: medics.map((medic) => toOfficialInput(medic)),
         players: playerInputs,
         receipt_pdf_blob: pdfBlob,
         progress: progressRef.current,
@@ -249,6 +312,13 @@ export default function SubmitFlow({
                 <li>
                   {playersWithGaps} player{playersWithGaps === 1 ? "" : "s"} still
                   missing required details or proof of age.
+                </li>
+              )}
+              {officialsWithGaps > 0 && (
+                <li>
+                  {officialsWithGaps} team official
+                  {officialsWithGaps === 1 ? "" : "s"} named but missing a date of
+                  birth or nationality.
                 </li>
               )}
             </ul>

@@ -16,9 +16,10 @@ import {
   MapPin,
   AlertTriangle,
   CheckCircle2,
+  ClipboardList,
   FileText,
 } from "lucide-react";
-import { useRegister, playerBlockingGaps } from "@/context/sportContext";
+import { useRegister, playerBlockingGaps, officialBlockingGaps } from "@/context/sportContext";
 
 type Props = {
   /** Tournament logo shown in the header, e.g. "/under1.png". */
@@ -74,6 +75,71 @@ function Detail({
   );
 }
 
+/**
+ * One official's card: photo well plus name / date of birth / nationality.
+ *
+ * A component rather than a render function because it calls useObjectUrl, and a
+ * hook can't be called from inside a loop. Making it a component gives each
+ * official its own hook instance, so all five (head coach + four others) render
+ * through identical markup.
+ */
+function StaffCard({
+  heading,
+  fullName,
+  dateOfBirth,
+  nationality,
+  passport,
+  gaps,
+}: {
+  heading: string;
+  fullName: string;
+  dateOfBirth: string;
+  nationality: string;
+  passport: File | null;
+  gaps: string[];
+}) {
+  const photoUrl = useObjectUrl(passport);
+
+  return (
+    <div
+      className={`rounded-lg border p-3 ${
+        gaps.length > 0
+          ? "border-amber-500/40 bg-amber-950/10"
+          : "border-white/15 bg-slate-950/50"
+      }`}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-[#16a34a] mb-2">
+        {heading}
+      </p>
+      <div className="flex gap-3">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-slate-950/60">
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photoUrl}
+              alt={`${heading} passport`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <User className="h-6 w-6 text-slate-500" />
+          )}
+        </div>
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-2">
+          <Detail icon={User} label="Full Name" value={fullName} />
+          <Detail icon={Calendar} label="Date of Birth" value={dateOfBirth} />
+          <Detail icon={Flag} label="Nationality" value={nationality} />
+        </div>
+      </div>
+      {gaps.length > 0 && (
+        <p className="mt-2 flex items-start gap-1 text-[10px] text-amber-400">
+          <AlertTriangle className="h-3 w-3 shrink-0 mt-px" />
+          <span>Missing: {gaps.join(", ")}</span>
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function RegistrationReview({
   logoSrc,
   logoAlt,
@@ -81,7 +147,14 @@ export default function RegistrationReview({
   editRoute,
   submitRoute,
 }: Props) {
-  const { academyProfile, headCoach, players } = useRegister();
+  const {
+    academyProfile,
+    headCoach,
+    teamManager,
+    assistantCoach,
+    medics,
+    players,
+  } = useRegister();
   const router = useRouter();
 
   const logoUrl = useObjectUrl(academyProfile.logo);
@@ -99,6 +172,22 @@ export default function RegistrationReview({
     (p) => (playerGaps.get(p.id) ?? []).length > 0,
   ).length;
 
+  // The four officials besides the head coach, in the order they were entered.
+  // Each is optional: an un-named one is simply not listed, and reports no gaps.
+  const officials = [
+    { heading: "Team Manager", person: teamManager },
+    { heading: "Assistant Coach", person: assistantCoach },
+    ...medics.map((medic, index) => ({
+      heading: `Medic ${index + 1}`,
+      person: medic,
+    })),
+  ].map((entry) => ({
+    ...entry,
+    gaps: officialBlockingGaps(entry.person),
+  }));
+  const namedOfficials = officials.filter((o) => o.person.fullName.trim());
+  const officialsWithGaps = officials.filter((o) => o.gaps.length > 0).length;
+
   // Registration-level blockers.
   const academyGaps: string[] = [];
   if (!academyProfile.academyName.trim()) academyGaps.push("academy name");
@@ -106,10 +195,18 @@ export default function RegistrationReview({
   if (!academyProfile.contactNumber.trim()) academyGaps.push("contact number");
   if (!academyProfile.email.trim()) academyGaps.push("email");
   if (!headCoach.fullName.trim()) academyGaps.push("head coach name");
+  // coach_dob is a NOT NULL `date` column, so an empty one fails the insert with
+  // a raw Postgres type error. Catch it here where it can still be fixed.
+  if (!headCoach.dateOfBirth.trim())
+    academyGaps.push("head coach date of birth");
+  if (!headCoach.nationality.trim()) academyGaps.push("head coach nationality");
 
   const hasNoPlayers = filledCount === 0;
   const canProceed =
-    !hasNoPlayers && playersWithGaps === 0 && academyGaps.length === 0;
+    !hasNoPlayers &&
+    playersWithGaps === 0 &&
+    officialsWithGaps === 0 &&
+    academyGaps.length === 0;
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
@@ -204,6 +301,41 @@ export default function RegistrationReview({
               <Detail icon={Flag} label="Nationality" value={headCoach.nationality} />
             </div>
           </div>
+        </section>
+
+        {/* Team Officials — everyone besides the head coach. All optional, so
+            only the ones actually entered are listed. */}
+        <section className="mt-4 rounded-xl border border-white/15 bg-slate-950/40 p-4">
+          <h2 className="flex items-center justify-between text-sm font-semibold text-white mb-3">
+            <span className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-[#16a34a]" />
+              Team Officials
+            </span>
+            <span className="text-[11px] font-medium text-slate-400">
+              {namedOfficials.length} of {officials.length} entered
+            </span>
+          </h2>
+
+          {namedOfficials.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {namedOfficials.map((official) => (
+                <StaffCard
+                  key={official.heading}
+                  heading={official.heading}
+                  fullName={official.person.fullName}
+                  dateOfBirth={official.person.dateOfBirth}
+                  nationality={official.person.nationality}
+                  passport={official.person.passport}
+                  gaps={official.gaps}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-500">
+              No team manager, assistant coach or medics entered. That&apos;s
+              fine — they&apos;re optional.
+            </p>
+          )}
         </section>
 
         {/* Players */}
@@ -328,6 +460,14 @@ export default function RegistrationReview({
                   {playersWithGaps} player{playersWithGaps === 1 ? "" : "s"} still
                   missing required details or proof of age (see the amber rows
                   above).
+                </li>
+              )}
+              {officialsWithGaps > 0 && (
+                <li>
+                  {officialsWithGaps} team official
+                  {officialsWithGaps === 1 ? "" : "s"} named but missing a date of
+                  birth or nationality. Fill those in, or clear the name to leave
+                  the role out.
                 </li>
               )}
             </ul>

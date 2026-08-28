@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useRegister } from "@/context/sportContext";
 import PhotoUpload from "@/components/PhotoUpload";
 
-const NEXT_ROUTE = "/register/secondary-cup/academy-squad";
+const NEXT_ROUTE = "/register/secondary-cup/team-manager";
 const LOGO_SRC = "/secondary.png";
 const LOGO_ALT = "The Nathaniel Idowu Secondary Football League";
 

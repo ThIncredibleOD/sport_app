@@ -73,12 +73,69 @@ export const playerBlockingGaps = (player: Player): string[] => {
   return gaps;
 };
 
+/**
+ * A team official other than the head coach — team manager, assistant coach or
+ * medic.
+ *
+ * One shared shape rather than a type per role: all of them are captured with
+ * the same four fields, so the staff pages, the review screen, the summary PDF
+ * and the submit payload can each handle them through a single code path.
+ *
+ * Deliberately does NOT carry HeadCoach's `dob`, which is an unused duplicate of
+ * `dateOfBirth` and only survives there because existing code sets it.
+ */
+export type Official = {
+  id: string;
+  passport: File | null;
+  fullName: string;
+  dateOfBirth: string;
+  nationality: string;
+};
+
+/** Single source of truth for a blank official, mirroring createEmptyPlayer. */
+export const createEmptyOfficial = (): Official => ({
+  id: crypto.randomUUID(),
+  passport: null,
+  fullName: "",
+  dateOfBirth: "",
+  nationality: "",
+});
+
+/**
+ * Required-field gaps for one official, mirroring playerBlockingGaps.
+ *
+ * Officials are optional by design: a team can turn up at the desk without an
+ * assistant coach or a second medic and must still be registrable, so an
+ * un-named official counts as absent rather than incomplete and reports no gaps.
+ * Once a name is typed, that person needs a date of birth and a nationality to
+ * be worth storing at all — which is also what the staff form enforces.
+ *
+ * A photo is never required: officials' passports are nice to have, not a gate.
+ */
+export const officialBlockingGaps = (official: Official): string[] => {
+  if (!official.fullName.trim()) return [];
+  const gaps: string[] = [];
+  if (!official.dateOfBirth.trim()) gaps.push("date of birth");
+  if (!official.nationality.trim()) gaps.push("nationality");
+  return gaps;
+};
+
 type RegisterContextType = {
   academyProfile: AcademyProfile;
   setAcademyProfile: React.Dispatch<React.SetStateAction<AcademyProfile>>;
 
   headCoach: HeadCoach;
   setHeadCoach: React.Dispatch<React.SetStateAction<HeadCoach>>;
+
+  teamManager: Official;
+  setTeamManager: React.Dispatch<React.SetStateAction<Official>>;
+
+  assistantCoach: Official;
+  setAssistantCoach: React.Dispatch<React.SetStateAction<Official>>;
+
+  /** Exactly two entries, so the medics page can render both from one loop. */
+  medics: Official[];
+  setMedics: React.Dispatch<React.SetStateAction<Official[]>>;
 
   players: Player[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
@@ -107,9 +164,26 @@ const initialCoach: HeadCoach = {
   nationality: "",
 };
 
+// Blank official for the module-level defaults below. Uses an empty id rather
+// than crypto.randomUUID() so nothing runs at import time on the server; the
+// real ids come from createEmptyOfficial() inside a component.
+const initialOfficial: Official = {
+  id: "",
+  passport: null,
+  fullName: "",
+  dateOfBirth: "",
+  nationality: "",
+};
+
 export function SportProvider({ children }: { children: React.ReactNode }) {
   const [academyProfile, setAcademyProfile] = useState<AcademyProfile>(initialAcademy);
   const [headCoach, setHeadCoach] = useState<HeadCoach>(initialCoach);
+  const [teamManager, setTeamManager] = useState<Official>(createEmptyOfficial);
+  const [assistantCoach, setAssistantCoach] = useState<Official>(createEmptyOfficial);
+  const [medics, setMedics] = useState<Official[]>(() => [
+    createEmptyOfficial(),
+    createEmptyOfficial(),
+  ]);
   const [players, setPlayers] = useState<Player[]>([]);
 
   return (
@@ -119,6 +193,12 @@ export function SportProvider({ children }: { children: React.ReactNode }) {
         setAcademyProfile,
         headCoach,
         setHeadCoach,
+        teamManager,
+        setTeamManager,
+        assistantCoach,
+        setAssistantCoach,
+        medics,
+        setMedics,
         players,
         setPlayers,
       }}
@@ -138,6 +218,12 @@ export function useRegister() {
       setAcademyProfile: () => {},
       headCoach: initialCoach,
       setHeadCoach: () => {},
+      teamManager: initialOfficial,
+      setTeamManager: () => {},
+      assistantCoach: initialOfficial,
+      setAssistantCoach: () => {},
+      medics: [initialOfficial, initialOfficial],
+      setMedics: () => {},
       players: [],
       setPlayers: () => {},
       formData: {
@@ -180,6 +266,9 @@ export function useRegister() {
   const resetForm = () => {
     context.setAcademyProfile(initialAcademy);
     context.setHeadCoach(initialCoach);
+    context.setTeamManager(createEmptyOfficial());
+    context.setAssistantCoach(createEmptyOfficial());
+    context.setMedics([createEmptyOfficial(), createEmptyOfficial()]);
     context.setPlayers([]);
   };
 

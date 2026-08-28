@@ -16,6 +16,20 @@ export interface PlayerInput {
   proof_of_age: File; // PRIVATE (minor's document)
 }
 
+/**
+ * A team official other than the head coach — team manager, assistant coach or
+ * medic. All three are captured identically, so one shape covers them.
+ *
+ * A slot with a blank `full_name` means the team simply doesn't have that
+ * person: it is stored as NULLs and uploads nothing.
+ */
+export interface OfficialInput {
+  full_name: string;
+  dob: string;
+  nationality: string;
+  photo?: File | null; // PUBLIC (passport headshot — shown on review + summary)
+}
+
 export interface RegistrationInput {
   tournament_slug: string;
   /**
@@ -33,6 +47,15 @@ export interface RegistrationInput {
   coach_nationality: string;
   team_logo?: File | null; // PUBLIC (meant to be shown)
   coach_photo?: File | null; // PUBLIC (coach passport headshot — shown on review + summary)
+  /**
+   * Officials besides the head coach. Every one of them is optional — a team may
+   * turn up without an assistant coach or a second medic — so an absent or
+   * blank-named entry is stored as NULLs and never blocks a submission.
+   */
+  team_manager?: OfficialInput | null;
+  assistant_coach?: OfficialInput | null;
+  /** Up to two medics, in order. Missing entries count as absent. */
+  medics?: (OfficialInput | null | undefined)[];
   players: PlayerInput[];
   /**
    * Pre-rendered roster summary PDF (generated client-side from the in-memory
@@ -127,6 +150,21 @@ function extensionOf(name: string): string {
 }
 
 /**
+ * A date value for Postgres, or NULL when there isn't one.
+ *
+ * Postgres `date` columns reject an empty string outright — `invalid input
+ * syntax for type date: ""` — and an official nobody entered genuinely has no
+ * date, so a blank has to be written as NULL, not "". Every optional date this
+ * module writes goes through here; none is put in a row literal directly. Note
+ * `coach_dob` is NOT NULL, so it is guarded up front instead (see
+ * submitRegistration).
+ */
+function dateOrNull(value: string | null | undefined): string | null {
+  const trimmed = (value ?? "").trim();
+  return trimmed ? trimmed : null;
+}
+
+/**
  * Validate a user-supplied file before uploading. This is the single choke
  * point for every storage upload in the app — enforcing type + size here
  * covers all registration paths.
@@ -166,6 +204,41 @@ function validateFile(
     throw new Error(
       `${label} must be ${kind === "image" ? "an image (JPG, PNG, WEBP)" : "a PDF or image"}.`,
     );
+  }
+}
+
+/**
+ * Refuse to start if two different files would be written to the same storage
+ * key, so one can never silently overwrite the other.
+ *
+ * WHY THIS EXISTS: player files were stored at `<regId>/photo_<filename>` —
+ * nothing in the path identified the player. Phone galleries name almost every
+ * picture `image.jpg`, so a whole squad's photos targeted ONE object: each
+ * upload replaced the last and every player row was left pointing at the same
+ * file. Three teams were registered that way before it was noticed, because the
+ * roster PDF is built from the in-memory files and therefore looked correct
+ * while the database did not. The overwritten originals were gone for good.
+ *
+ * Every path now carries a per-item discriminator — the slot number for players,
+ * the role for officials — so this cannot fire as the code stands. It is here so
+ * that if an edit ever drops one, the submission stops with a clear message
+ * BEFORE the first byte is uploaded, instead of quietly storing one face for a
+ * whole team. Called once per submit, over every path including those belonging
+ * to already-saved players, so it behaves identically on a resumed attempt.
+ */
+function assertUniquePaths(
+  entries: { bucket: string; path: string; label: string }[],
+): void {
+  const owners = new Map<string, string>();
+  for (const entry of entries) {
+    const key = `${entry.bucket}/${entry.path}`;
+    const owner = owners.get(key);
+    if (owner) {
+      throw new Error(
+        `Internal error: ${owner} and ${entry.label} would both be stored as "${key}", so one would overwrite the other. Nothing has been saved. This is a bug in the app, not something you did — retrying will not help.`,
+      );
+    }
+    owners.set(key, entry.label);
   }
 }
 
@@ -378,7 +451,7 @@ export function newRegistrationId(): string {
  *
  * Buckets touched:
  *   - team-logos            PUBLIC   (team logo)
- *   - player-photos         PUBLIC   (player pictures + coach headshot)
+ *   - player-photos         PUBLIC   (player pictures + every official's headshot)
  *   - proof-of-age          PRIVATE  (path only; signed on demand by admin)
  *   - registration-receipts PUBLIC   (downloadable roster PDF)
  */
@@ -425,6 +498,15 @@ export async function submitRegistration(
   if (players.length === 0)
     throw new Error("Add at least one player before submitting.");
 
+  // coach_full_name and coach_dob are NOT NULL, and coach_dob is a `date` — so a
+  // blank one fails with a raw Postgres type error that tells the operator
+  // nothing. Say what is actually missing instead. The review and submit screens
+  // already gate on this; this is the backstop for a deep-linked submit.
+  if (!data.coach_full_name.trim())
+    throw new Error("Add the head coach's full name before submitting.");
+  if (!dateOrNull(data.coach_dob))
+    throw new Error("Add the head coach's date of birth before submitting.");
+
   // Shrink anything still oversized, THEN validate. Order matters: validating
   // first would reject a large photo we were about to fix.
   report("Preparing your photos...");
@@ -434,6 +516,39 @@ export async function submitRegistration(
   const coachPhoto = data.coach_photo
     ? await ensureUnderCap(data.coach_photo, "photo")
     : null;
+
+  // Officials besides the head coach. One list drives compression, validation,
+  // upload AND the row columns, so a role can't end up handled four subtly
+  // different ways. `column` is the registrations column prefix; `prefix` names
+  // the file inside the registration's storage folder.
+  //
+  // A slot whose name is blank is absent, not incomplete: nothing is compressed,
+  // validated, uploaded or stored for it, and every one of its columns is NULL.
+  const officials = await Promise.all(
+    [
+      { column: "manager", prefix: "manager", label: "Team manager", input: data.team_manager },
+      { column: "assistant_coach", prefix: "assistant", label: "Assistant coach", input: data.assistant_coach },
+      { column: "medic1", prefix: "medic1", label: "Medic 1", input: data.medics?.[0] },
+      { column: "medic2", prefix: "medic2", label: "Medic 2", input: data.medics?.[1] },
+    ].map(async (slot) => {
+      const fullName = (slot.input?.full_name ?? "").trim();
+      const named = fullName.length > 0;
+      return {
+        column: slot.column,
+        prefix: slot.prefix,
+        label: slot.label,
+        fullName: named ? fullName : null,
+        dob: named ? dateOrNull(slot.input?.dob) : null,
+        nationality: named
+          ? (slot.input?.nationality ?? "").trim() || null
+          : null,
+        photo:
+          named && slot.input?.photo
+            ? await ensureUnderCap(slot.input.photo, "photo")
+            : null,
+      };
+    }),
+  );
 
   const prepared = await Promise.all(
     players.map(async (p) => ({
@@ -446,6 +561,9 @@ export async function submitRegistration(
   // Validate everything up front so we don't create a half-written record.
   if (teamLogo) validateFile(teamLogo, "image", "Team logo");
   if (coachPhoto) validateFile(coachPhoto, "image", "Coach photo");
+  officials.forEach((o) => {
+    if (o.photo) validateFile(o.photo, "image", `${o.label} photo`);
+  });
   prepared.forEach((p, i) => {
     const who = p.full_name.trim() || `Player ${i + 1}`;
     if (p.photo) validateFile(p.photo, "image", `${who}'s photo`);
@@ -455,11 +573,89 @@ export async function submitRegistration(
   const regId = data.id ?? newRegistrationId();
   const progress = data.progress;
 
+  /* --------------------------- Storage paths ------------------------------ */
+  // Every path this submission will write, built here and nowhere else, then
+  // checked for collisions before the first upload. Keeping them together is
+  // what makes that check possible — and stops the players loop from quietly
+  // growing its own naming scheme again, which is how a whole squad's photos
+  // ended up overwriting each other. See assertUniquePaths.
+  const logoPath = teamLogo
+    ? `${regId}/logo_${sanitizeFileName(teamLogo.name)}`
+    : null;
+
+  const coachPath = coachPhoto
+    ? `${regId}/coach_${sanitizeFileName(coachPhoto.name)}`
+    : null;
+
+  // `official.prefix` is what keeps the four of them apart in one folder.
+  const officialPaths = officials.map((official) =>
+    official.photo
+      ? `${regId}/${official.prefix}_${sanitizeFileName(official.photo.name)}`
+      : null,
+  );
+
+  const pdfPath = data.receipt_pdf_blob ? `${regId}/summary.pdf` : null;
+
+  // The slot number MUST stay in both of these. `index + 1` rather than a random
+  // id on purpose: it is the same key `progress.playersSaved` uses, so a resumed
+  // submit rebuilds byte-identical paths and re-uploads nothing.
+  const playerPaths = prepared.map((player, index) => ({
+    photo: player.photo
+      ? `${regId}/photo_${index + 1}_${sanitizeFileName(player.photo.name)}`
+      : null,
+    age: `${regId}/age_${index + 1}_${sanitizeFileName(
+      player.proof_of_age.name,
+    )}`,
+  }));
+
+  assertUniquePaths([
+    ...(logoPath
+      ? [{ bucket: "team-logos", path: logoPath, label: "the team logo" }]
+      : []),
+    ...(coachPath
+      ? [
+          {
+            bucket: "player-photos",
+            path: coachPath,
+            label: "the head coach's photo",
+          },
+        ]
+      : []),
+    ...officialPaths.flatMap((path, i) =>
+      path
+        ? [
+            {
+              bucket: "player-photos",
+              path,
+              label: `${officials[i].label}'s photo`,
+            },
+          ]
+        : [],
+    ),
+    ...(pdfPath
+      ? [
+          {
+            bucket: "registration-receipts",
+            path: pdfPath,
+            label: "the roster PDF",
+          },
+        ]
+      : []),
+    ...playerPaths.flatMap(({ photo, age }, i) => {
+      const who = prepared[i].full_name.trim() || `player ${i + 1}`;
+      return [
+        ...(photo
+          ? [{ bucket: "player-photos", path: photo, label: `${who}'s photo` }]
+          : []),
+        { bucket: "proof-of-age", path: age, label: `${who}'s proof of age` },
+      ];
+    }),
+  ]);
+
   // Team logo — PUBLIC bucket (meant to be shown).
   report("Uploading your details...");
   let teamLogoUrl = "";
-  if (teamLogo) {
-    const logoPath = `${regId}/logo_${sanitizeFileName(teamLogo.name)}`;
+  if (teamLogo && logoPath) {
     await uploadToBucket("team-logos", logoPath, teamLogo, undefined, progress);
     teamLogoUrl = publicUrl("team-logos", logoPath);
   }
@@ -467,8 +663,7 @@ export async function submitRegistration(
   // Coach passport headshot — PUBLIC. Reuses the player-photos bucket (same kind
   // of person photo, same visibility) so no extra bucket has to be provisioned.
   let coachPhotoUrl = "";
-  if (coachPhoto) {
-    const coachPath = `${regId}/coach_${sanitizeFileName(coachPhoto.name)}`;
+  if (coachPhoto && coachPath) {
     await uploadToBucket(
       "player-photos",
       coachPath,
@@ -479,11 +674,34 @@ export async function submitRegistration(
     coachPhotoUrl = publicUrl("player-photos", coachPath);
   }
 
+  // The other officials' passport headshots — PUBLIC, same bucket and same
+  // reasoning as the coach's. Uploaded before the registration insert because
+  // their URLs are columns on that row.
+  const officialColumns: Record<string, string | null> = {};
+  for (let i = 0; i < officials.length; i++) {
+    const official = officials[i];
+    const officialPath = officialPaths[i];
+    let officialPhotoUrl: string | null = null;
+    if (official.photo && officialPath) {
+      await uploadToBucket(
+        "player-photos",
+        officialPath,
+        official.photo,
+        undefined,
+        progress,
+      );
+      officialPhotoUrl = publicUrl("player-photos", officialPath);
+    }
+    officialColumns[`${official.column}_full_name`] = official.fullName;
+    officialColumns[`${official.column}_dob`] = official.dob;
+    officialColumns[`${official.column}_nationality`] = official.nationality;
+    officialColumns[`${official.column}_photo_url`] = officialPhotoUrl;
+  }
+
   // Roster PDF — PUBLIC bucket. The registrant downloads it from the
   // confirmation page, and the admin page links to the same URL.
   let receiptPdfUrl = "";
-  if (data.receipt_pdf_blob) {
-    const pdfPath = `${regId}/summary.pdf`;
+  if (data.receipt_pdf_blob && pdfPath) {
     await uploadToBucket(
       "registration-receipts",
       pdfPath,
@@ -517,6 +735,9 @@ export async function submitRegistration(
         coach_dob: data.coach_dob,
         coach_nationality: data.coach_nationality,
         coach_photo_url: coachPhotoUrl,
+        // Team manager / assistant coach / medic 1 / medic 2 — all NULL for a
+        // team that doesn't have them. Never "" for the dates: see dateOrNull.
+        ...officialColumns,
         receipt_pdf_url: receiptPdfUrl,
         payment_status: "pending_payment",
       },
@@ -530,28 +751,29 @@ export async function submitRegistration(
     if (progress?.playersSaved.has(index)) continue;
 
     const player = prepared[index];
+    const paths = playerPaths[index];
     report(`Uploading players (${index + 1}/${prepared.length})...`);
 
     try {
       // Player photo — PUBLIC bucket (shown on squad pages). Optional.
+      // Path built and collision-checked above, deliberately not here: building
+      // it inline is exactly how it came to lack anything per-player.
       let photoUrl = "";
-      if (player.photo) {
-        const photoPath = `${regId}/photo_${sanitizeFileName(player.photo.name)}`;
+      if (player.photo && paths.photo) {
         await uploadToBucket(
           "player-photos",
-          photoPath,
+          paths.photo,
           player.photo,
           undefined,
           progress,
         );
-        photoUrl = publicUrl("player-photos", photoPath);
+        photoUrl = publicUrl("player-photos", paths.photo);
       }
 
       // Proof of age — PRIVATE bucket. Store the PATH; read via signed URL.
-      const agePath = `${regId}/age_${sanitizeFileName(player.proof_of_age.name)}`;
       await uploadToBucket(
         "proof-of-age",
-        agePath,
+        paths.age,
         player.proof_of_age,
         undefined,
         progress,
@@ -565,7 +787,7 @@ export async function submitRegistration(
         position: player.position,
         jersey_number: player.jersey_number ?? null,
         photo_url: photoUrl, // public URL (safe to expose)
-        proof_of_age_path: agePath, // private path (sign on demand)
+        proof_of_age_path: paths.age, // private path (sign on demand)
       });
 
       progress?.playersSaved.add(index);

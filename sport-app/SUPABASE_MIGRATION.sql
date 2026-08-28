@@ -83,6 +83,45 @@ ALTER TABLE registrations
 
 
 -- ----------------------------------------------------------------------------
+--  Team officials besides the head coach
+-- ----------------------------------------------------------------------------
+-- The form collects a team manager, an assistant coach and two medics alongside
+-- the head coach (app/register/*/{team-manager,assistant-coach,medics}).
+--
+-- EVERY column here is nullable, on purpose. Registration is typed in at the
+-- venue with a queue waiting, and a team that turns up without an assistant
+-- coach or a second medic must still be submittable — so an official nobody
+-- entered is written as four NULLs. Note DATE, not TEXT: the app funnels every
+-- one of these through a helper that converts "" to NULL, because a `date`
+-- column rejects an empty string outright.
+--
+-- Flat columns mirroring the existing coach_* ones rather than a child table,
+-- which means no new RLS policy is needed: the anon INSERT policy on
+-- registrations constrains only payment_status, so it already covers these.
+ALTER TABLE registrations
+  ADD COLUMN IF NOT EXISTS manager_full_name           TEXT,
+  ADD COLUMN IF NOT EXISTS manager_dob                 DATE,
+  ADD COLUMN IF NOT EXISTS manager_nationality         TEXT,
+  ADD COLUMN IF NOT EXISTS manager_photo_url           TEXT,
+  ADD COLUMN IF NOT EXISTS assistant_coach_full_name   TEXT,
+  ADD COLUMN IF NOT EXISTS assistant_coach_dob         DATE,
+  ADD COLUMN IF NOT EXISTS assistant_coach_nationality TEXT,
+  ADD COLUMN IF NOT EXISTS assistant_coach_photo_url   TEXT,
+  ADD COLUMN IF NOT EXISTS medic1_full_name            TEXT,
+  ADD COLUMN IF NOT EXISTS medic1_dob                  DATE,
+  ADD COLUMN IF NOT EXISTS medic1_nationality          TEXT,
+  ADD COLUMN IF NOT EXISTS medic1_photo_url            TEXT,
+  ADD COLUMN IF NOT EXISTS medic2_full_name            TEXT,
+  ADD COLUMN IF NOT EXISTS medic2_dob                  DATE,
+  ADD COLUMN IF NOT EXISTS medic2_nationality          TEXT,
+  ADD COLUMN IF NOT EXISTS medic2_photo_url            TEXT;
+
+-- The officials' headshots go to the EXISTING player-photos bucket with a
+-- manager_/assistant_/medic1_/medic2_ filename prefix, exactly as the coach
+-- headshot already does — so this needs no bucket work in the dashboard.
+
+
+-- ----------------------------------------------------------------------------
 --  Legacy NOT NULL columns on players  <-- SECOND HARD BLOCKER
 -- ----------------------------------------------------------------------------
 -- An older schema stored these two as `_url` (a public URL). The app now stores

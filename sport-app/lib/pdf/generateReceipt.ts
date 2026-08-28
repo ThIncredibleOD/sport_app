@@ -17,6 +17,18 @@ export interface ReceiptPlayer {
   photo?: File | null;
 }
 
+/**
+ * One of the team's non-coach officials (manager, assistant coach, medics).
+ * Text only — no photo — so adding four of them doesn't move the PDF's size
+ * budget. The caller passes only the officials that were actually entered.
+ */
+export interface ReceiptOfficial {
+  role: string;
+  name: string;
+  dob: string;
+  nationality: string;
+}
+
 export interface ReceiptData {
   tournamentName: string;
   academyName: string;
@@ -30,6 +42,12 @@ export interface ReceiptData {
   coachNationality: string;
   /** In-memory coach passport headshot. Compressed into the coach block. */
   coachPhoto?: File | null;
+  /**
+   * Team manager / assistant coach / medics, in display order. Optional and
+   * possibly empty: every one of these people is optional to register, so a
+   * team with none produces a PDF identical to one from before they existed.
+   */
+  officials?: ReceiptOfficial[];
   players: ReceiptPlayer[];
   /** Pre-formatted submission timestamp label (caller controls formatting). */
   submittedAtLabel: string;
@@ -223,6 +241,39 @@ export async function generateRegistrationReceipt(
   }
 
   y = blockStartY + Math.max(academyLines.length, coachLines.length) * 5 + 4;
+
+  /* ------------------------- Team officials ------------------------------ */
+  // Text only, using the same manual y cursor as the block above, so the
+  // roster table's `startY` arithmetic below stays correct. Skipped entirely
+  // when a team registered no officials.
+  const officials = data.officials ?? [];
+  if (officials.length > 0) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...SLATE);
+    doc.text(`Team Officials (${officials.length})`, marginX, y);
+    y += 5;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...SLATE);
+
+    const maxWidth = pageWidth - marginX * 2;
+    officials.forEach((official) => {
+      const line = `${official.role}: ${official.name || "-"}   |   DOB: ${
+        official.dob || "-"
+      }   |   Nationality: ${official.nationality || "-"}`;
+      // Wrap rather than clip, so an unusually long name still reads in full
+      // and y advances by however many lines it actually took.
+      const wrapped: string[] = doc.splitTextToSize(line, maxWidth);
+      wrapped.forEach((part, i) => {
+        doc.text(part, marginX, y + i * 5);
+      });
+      y += wrapped.length * 5;
+    });
+
+    y += 4;
+  }
 
   /* ----------------------------- Roster ---------------------------------- */
   doc.setFont("helvetica", "bold");

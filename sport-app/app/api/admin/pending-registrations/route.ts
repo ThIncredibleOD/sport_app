@@ -39,6 +39,11 @@ const DEFAULT_STATUS = "pending_payment";
  * Player rows include `proof_of_age_path`, which is a PRIVATE bucket path, not a
  * URL. It is useless on its own; the client trades it for a short-lived signed
  * URL via /api/admin/get-receipt-signed-url.
+ *
+ * The `manager_*`, `assistant_coach_*`, `medic1_*` and `medic2_*` columns are the
+ * team's other officials. All are nullable — every one of those people is
+ * optional to register — and each `*_photo_url` is a PUBLIC player-photos URL
+ * (same bucket as the coach headshot), so it renders directly with no signing.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -66,6 +71,23 @@ export async function GET(request: NextRequest) {
         coach_full_name,
         coach_dob,
         coach_nationality,
+        coach_photo_url,
+        manager_full_name,
+        manager_dob,
+        manager_nationality,
+        manager_photo_url,
+        assistant_coach_full_name,
+        assistant_coach_dob,
+        assistant_coach_nationality,
+        assistant_coach_photo_url,
+        medic1_full_name,
+        medic1_dob,
+        medic1_nationality,
+        medic1_photo_url,
+        medic2_full_name,
+        medic2_dob,
+        medic2_nationality,
+        medic2_photo_url,
         receipt_pdf_url,
         payment_status,
         created_at,
