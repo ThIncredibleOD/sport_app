@@ -75,7 +75,14 @@ export default function Events() {
 
         {/* Grid Layout for Event Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 md:mb-10">
-          {/* Card 1 */}
+          <EventCard
+            title="NATHANIEL IDOWU U-16 LEAGUE EXPLODES INTO LIFE WITH 22 GOALS ON OPENING DAY"
+            date="September 5 2026"
+            description="Fortune FA, Bright Stars and Divinely Blessed Win as Valentine Aniako and Ugwuokolie Chidalu Hit Hat-tricks"
+            imageSrc="/facebook-news01.jpeg"
+            linkHref="https://www.facebook.com/story.php?story_fbid=122116692015427811&id=61592834339885&rdid=7iIBqPwZ0BPSDFEG#"
+          />
+
           <EventCard
             title="Maracana Sports Complex to host Nathaniel Idowu summer camp"
             date="July 13 2026"
@@ -83,10 +90,8 @@ export default function Events() {
             imageSrc="/news01.png"
             linkHref="https://thenationonlineng.net/maracana-sports-complex-to-host-nathaniel-idowu-summer-camp/
 "
-            
           />
 
-          {/* Card 2 */}
           <EventCard
             title="Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos"
             date="July 12 2026"
@@ -105,7 +110,6 @@ export default function Events() {
             linkHref="https://punchng.com/maracana-stadium-to-host-nathaniel-idowu-summer-camp/"
           />
 
-          {/* Card 4 */}
           <EventCard
             title="Organisers pick Maracana Stadium for Nathaniel Idowu Summer Camp"
             date="July 13 2026"
