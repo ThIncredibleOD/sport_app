@@ -9,9 +9,13 @@ import {
   createEmptyOfficial,
   createEmptyPlayer,
 } from "@/context/sportContext";
+import RegistrationClosed from "@/components/RegistrationClosed";
+import { tournamentByFlow } from "@/lib/tournaments";
 import { useState } from "react";
 
 const PLAYER_COUNT = 18;
+
+const TOURNAMENT = tournamentByFlow("secondary-cup");
 
 export default function SecondaryCupLayout({
   children,
@@ -50,6 +54,12 @@ export default function SecondaryCupLayout({
   const [players, setPlayers] = useState<Player[]>(
     Array.from({ length: PLAYER_COUNT }, () => createEmptyPlayer()),
   );
+
+  // See the note in app/register/league/layout.tsx — the guard sits after the
+  // hooks on purpose, and covers every step of this flow.
+  if (!TOURNAMENT.registrationOpen) {
+    return <RegistrationClosed tournament={TOURNAMENT} />;
+  }
 
   return (
     <SportContext.Provider

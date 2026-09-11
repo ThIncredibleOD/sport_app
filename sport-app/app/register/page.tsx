@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 
+import { TOURNAMENTS, Tournament } from "@/lib/tournaments";
+
 export default function RegisterTournament() {
   const router = useRouter();
 
@@ -35,89 +37,98 @@ export default function RegisterTournament() {
           </p>
         </div>
 
-        {/* Manual Tournament Selection Buttons */}
+        {/* Tournament selection. Rendered from lib/tournaments.ts so a closed
+            tournament cannot be closed here but left open somewhere else. */}
         <div className="mt-6 w-full space-y-3 relative z-10">
-          {/* BUTTON 1: The U16 Football League */}
-          <button
-            type="button"
-            onClick={() => router.push("/register/league/account-profile")}
-            className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
-          >
-            <div className="flex items-center gap-3 text-left">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900/60 p-1">
-                <img
-                  src="/under1.png"
-                  alt="The U16 Football League"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                  The U16 Football League
-                </span>
-                <span className="text-[10px] sm:text-xs text-slate-400 font-normal">
-                  The Nathaniel Idowu U16 Football Cup
-                </span>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-slate-300 shrink-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-emerald-400" />
-          </button>
-
-          {/* BUTTON 2: Secondary Cup */}
-          <button
-            type="button"
-            onClick={() =>
-              router.push("/register/secondary-cup/account-profile")
-            }
-            className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
-          >
-            <div className="flex items-center gap-3 text-left">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900/60 p-1">
-                <img
-                  src="/secondary.png"
-                  alt="Secondary Cup"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                  All Secondary School Cup
-                </span>
-                <span className="text-[10px] sm:text-xs text-slate-400 font-normal">
-                  The Nathaniel Idowu 7s Football League
-                </span>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-slate-300 shrink-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-emerald-400" />
-          </button>
-
-          {/* BUTTON 3: Unity Cup */}
-          <button
-            type="button"
-            onClick={() => router.push("/register/unity-cup/account-profile")}
-            className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
-          >
-            <div className="flex items-center gap-3 text-left">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900/60 p-1">
-                <img
-                  src="/unity.png"
-                  alt="Unity Cup"
-                  className="h-full w-full object-contain"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
-                  Unity Cup
-                </span>
-                <span className="text-[10px] sm:text-xs text-slate-400 font-normal">
-                The Nathaniel Idowu Unity Cup
-                </span>
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 text-slate-300 shrink-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-emerald-400" />
-          </button>
+          {TOURNAMENTS.map((tournament) => (
+            <TournamentOption
+              key={tournament.slug}
+              tournament={tournament}
+              onSelect={() =>
+                router.push(`/register/${tournament.flow}/account-profile`)
+              }
+            />
+          ))}
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * One row of the picker.
+ *
+ * A closed tournament stays visible and keeps its logo — a team arriving to
+ * register needs to be told the entries are complete, not left wondering
+ * whether they are on the wrong page. It renders as a plain div rather than a
+ * disabled button so there is no clickable target at all.
+ */
+function TournamentOption({
+  tournament,
+  onSelect,
+}: {
+  tournament: Tournament;
+  onSelect: () => void;
+}) {
+  const { name, subtitle, logo, registrationOpen } = tournament;
+
+  const body = (
+    <>
+      <div className="flex items-center gap-3 text-left">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900/60 p-1 ${
+            registrationOpen ? "" : "opacity-40 grayscale"
+          }`}
+        >
+          <img src={logo} alt={name} className="h-full w-full object-contain" />
+        </div>
+        <div className="flex flex-col">
+          <span
+            className={`text-xs sm:text-sm font-semibold transition-colors ${
+              registrationOpen
+                ? "text-white group-hover:text-emerald-400"
+                : "text-slate-400"
+            }`}
+          >
+            {name}
+          </span>
+          <span
+            className={`text-[10px] sm:text-xs font-normal ${
+              registrationOpen ? "text-slate-400" : "text-slate-500"
+            }`}
+          >
+            {registrationOpen ? subtitle : "Registration closed"}
+          </span>
+        </div>
+      </div>
+      {registrationOpen ? (
+        <ArrowRight className="h-4 w-4 text-slate-300 shrink-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-emerald-400" />
+      ) : (
+        <span className="shrink-0 rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+          Closed
+        </span>
+      )}
+    </>
+  );
+
+  if (!registrationOpen) {
+    return (
+      <div
+        aria-disabled="true"
+        className="flex w-full items-center justify-between rounded-xl border border-white/5 bg-slate-950/20 backdrop-blur-sm p-3.5 cursor-not-allowed select-none"
+      >
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
+    >
+      {body}
+    </button>
   );
 }

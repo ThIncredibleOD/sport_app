@@ -14,6 +14,7 @@ import {
   ListChecks,
   LogOut,
   Mail,
+  Pencil,
   Phone,
   RefreshCw,
   RotateCcw,
@@ -22,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import { registrationReference } from "@/lib/reference";
+import ChangesTab from "@/components/admin/ChangesTab";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -94,9 +96,19 @@ interface StaffMember {
  */
 type Status = "pending_payment" | "rejected";
 
-const TABS: { value: Status; label: string; icon: typeof ListChecks }[] = [
+/**
+ * The tabs, which are the two statuses plus the change queue.
+ *
+ * "changes" is not a `payment_status` — it selects a different view entirely,
+ * backed by `pending_changes` rather than by registrations. Kept as a separate
+ * type so the fetch below can never be handed it as a query parameter.
+ */
+type Tab = Status | "changes";
+
+const TABS: { value: Tab; label: string; icon: typeof ListChecks }[] = [
   { value: "pending_payment", label: "Registered", icon: ListChecks },
   { value: "rejected", label: "Cancelled", icon: Ban },
+  { value: "changes", label: "Changes", icon: Pencil },
 ];
 
 function formatDate(value: string | null): string {
@@ -225,12 +237,16 @@ function StaffList({ reg }: { reg: Registration }) {
 export default function AdminRegistrationsPage() {
   const router = useRouter();
 
-  const [status, setStatus] = useState<Status>("pending_payment");
+  const [status, setStatus] = useState<Tab>("pending_payment");
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Shown as a badge on the Changes tab so a waiting request is visible from
+  // the other two tabs. Fetched here for the badge, and kept in step by
+  // ChangesTab itself once that tab has been opened.
+  const [changesCount, setChangesCount] = useState(0);
   // Bumped to re-run the fetch effect. Cheaper than duplicating the request
   // logic in every handler that needs fresh data.
   const [reloadToken, setReloadToken] = useState(0);
@@ -239,6 +255,12 @@ export default function AdminRegistrationsPage() {
   // tabs or hitting refresh changes a dep, and the in-flight response from the
   // previous state is discarded instead of overwriting the new one.
   useEffect(() => {
+    // The Changes tab loads its own data. Nothing is set here: calling
+    // setState synchronously in an effect triggers a second render pass, and
+    // `loading` is already false because selectTab/reload never raise it for
+    // this tab.
+    if (status === "changes") return;
+
     let cancelled = false;
 
     (async () => {
@@ -270,15 +292,43 @@ export default function AdminRegistrationsPage() {
   }, [status, reloadToken, router]);
 
   const reload = useCallback(() => {
-    setLoading(true);
+    // Not on the Changes tab: the fetch effect returns early there, so nothing
+    // would ever lower the flag and the refresh icon would spin forever. That
+    // tab watches `reloadToken` and reports its own loading state.
+    if (status !== "changes") setLoading(true);
     setReloadToken((t) => t + 1);
-  }, []);
+  }, [status]);
 
-  function selectTab(next: Status) {
+  // The badge only — so a request waiting on the Changes tab is visible while
+  // looking at the other two. Failures are swallowed: an unreachable queue
+  // shouldn't put an error banner over the registrations list, and the tab
+  // itself reports properly when it is opened.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/pending-changes");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setChangesCount((data.changes ?? []).length);
+      } catch {
+        /* No badge. */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadToken]);
+
+  function selectTab(next: Tab) {
     if (next === status) return;
-    setLoading(true);
+    setLoading(next !== "changes");
     setRegistrations([]);
     setExpanded(new Set());
+    setError("");
     setStatus(next);
   }
 
@@ -385,6 +435,7 @@ export default function AdminRegistrationsPage() {
   }
 
   const active = status === "pending_payment";
+  const showingChanges = status === "changes";
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-white">
@@ -398,9 +449,11 @@ export default function AdminRegistrationsPage() {
             <div>
               <h1 className="text-xl font-bold">Registrations</h1>
               <p className="text-xs text-slate-400">
-                {loading
-                  ? "Loading…"
-                  : `${registrations.length} ${active ? "registered" : "cancelled"}`}
+                {showingChanges
+                  ? `${changesCount} change${changesCount === 1 ? "" : "s"} waiting`
+                  : loading
+                    ? "Loading…"
+                    : `${registrations.length} ${active ? "registered" : "cancelled"}`}
               </p>
             </div>
           </div>
@@ -444,20 +497,38 @@ export default function AdminRegistrationsPage() {
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
+                {tab.value === "changes" && changesCount > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-amber-500/20 text-amber-300"
+                    }`}
+                  >
+                    {changesCount}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
 
-        {error && (
-          <div className="mb-6 flex items-start gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-red-400">Error</p>
-              <p className="text-sm text-red-300">{error}</p>
-            </div>
-          </div>
-        )}
+        {showingChanges ? (
+          <ChangesTab
+            refreshToken={reloadToken}
+            onCountChange={setChangesCount}
+          />
+        ) : (
+          <>
+            {error && (
+              <div className="mb-6 flex items-start gap-2 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-red-400">Error</p>
+                  <p className="text-sm text-red-300">{error}</p>
+                </div>
+              </div>
+            )}
 
         {loading && registrations.length === 0 ? (
           <div className="flex items-center justify-center py-20">
@@ -669,6 +740,8 @@ export default function AdminRegistrationsPage() {
               );
             })}
           </div>
+        )}
+          </>
         )}
       </main>
     </div>

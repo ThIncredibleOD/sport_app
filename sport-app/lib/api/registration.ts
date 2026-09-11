@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 import { errorMessage } from "../errors";
+import { isRegistrationOpen } from "../tournaments";
 import {
   compressDocumentImage,
   compressPhoto,
@@ -459,6 +460,19 @@ export async function submitRegistration(
   data: RegistrationInput,
 ): Promise<SubmitRegistrationResult> {
   const report = data.onProgress ?? (() => {});
+
+  // Refuse a closed tournament before a single byte is uploaded.
+  //
+  // The flow's layout already replaces every step page with the closed notice,
+  // so nobody can reach this by navigating. What this catches is the tab that
+  // was ALREADY open, mid-registration, when the tournament closed: it still
+  // holds a filled-in form and a live Submit button, and without this check it
+  // would happily write an entry nobody is going to honour.
+  if (!isRegistrationOpen(data.tournament_slug)) {
+    throw new Error(
+      "Registration for this tournament is closed, so this entry was not saved. Nothing was uploaded. If this team still needs to be entered, it has to be added by the organiser.",
+    );
+  }
 
   // Resolve tournament slug → id. Retried: this is the FIRST network call of the
   // whole submission, so a transient failure here used to abort a fully-typed

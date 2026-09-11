@@ -9,9 +9,13 @@ import {
   createEmptyOfficial,
   createEmptyPlayer,
 } from "@/context/sportContext";
+import RegistrationClosed from "@/components/RegistrationClosed";
+import { tournamentByFlow } from "@/lib/tournaments";
 import { useState } from "react";
 
 const PLAYER_COUNT = 25;
+
+const TOURNAMENT = tournamentByFlow("league");
 
 export default function LeagueLayout({
   children,
@@ -50,6 +54,14 @@ export default function LeagueLayout({
   const [players, setPlayers] = useState<Player[]>(
     Array.from({ length: PLAYER_COUNT }, () => createEmptyPlayer()),
   );
+
+  // Closed tournaments show the notice instead of the flow. Placed AFTER every
+  // useState above, not before: an early return ahead of them would make the
+  // hook calls conditional. Guarding here rather than on each page covers all
+  // eight steps at once, including a deep link straight to /players.
+  if (!TOURNAMENT.registrationOpen) {
+    return <RegistrationClosed tournament={TOURNAMENT} />;
+  }
 
   return (
     <SportContext.Provider

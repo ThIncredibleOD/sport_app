@@ -83,6 +83,34 @@ ALTER TABLE registrations
 
 
 -- ----------------------------------------------------------------------------
+--  REGISTRATION WINDOW — which tournaments still accept new entries
+-- ----------------------------------------------------------------------------
+-- Closing a tournament has two halves, and both should be done:
+--
+--   1. lib/tournaments.ts  `registrationOpen: false`  — the app-level gate.
+--      Closes the button on /register, every step page (including deep links)
+--      and the submit call. This is what every real team hits.
+--
+--   2. this column + the INSERT policy below — the hard gate. The anon key is
+--      in the client bundle and is public knowledge, so the app-level gate is
+--      not a security boundary; this is. With the flag false, Postgres itself
+--      refuses the INSERT no matter what is talking to it.
+--
+-- DEFAULT TRUE so that running this file never silently closes a tournament
+-- that should be open. NOT NULL so the policy's `t.registration_open` is never
+-- NULL — in an RLS WITH CHECK, NULL is not true, and a tournament would become
+-- unregisterable for a reason nothing on screen would explain.
+ALTER TABLE tournaments
+  ADD COLUMN IF NOT EXISTS registration_open BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- Close the U16 league; leave the other two open. Written as an explicit pair
+-- rather than one UPDATE so re-running this file always restores the intended
+-- state, even if somebody flipped a flag by hand in the dashboard.
+UPDATE tournaments SET registration_open = FALSE WHERE slug =  'u16-league';
+UPDATE tournaments SET registration_open = TRUE  WHERE slug IN ('secondary-cup', 'unity-cup');
+
+
+-- ----------------------------------------------------------------------------
 --  Team officials besides the head coach
 -- ----------------------------------------------------------------------------
 -- The form collects a team manager, an assistant coach and two medics alongside
@@ -240,14 +268,28 @@ CREATE POLICY "Anyone can read tournaments"
 --  registrations — anon may INSERT and nothing else
 -- ----------------------------------------------------------------------------
 
--- INSERT: anyone may register, but only into the one state the app uses. The
--- WITH CHECK is the guard that stops a client inserting a row already marked
--- 'verified'. Pinned to a single value rather than a list: the app has exactly
--- one insert path (lib/api/registration.ts) and it always writes
--- 'pending_payment', so anything else is either stale or hostile.
+-- INSERT: anyone may register, but only into the one state the app uses, and
+-- only into a tournament that is still open. The WITH CHECK is the guard that
+-- stops a client inserting a row already marked 'verified'. Pinned to a single
+-- value rather than a list: the app has exactly one insert path
+-- (lib/api/registration.ts) and it always writes 'pending_payment', so anything
+-- else is either stale or hostile.
+--
+-- The EXISTS clause is the hard half of closing a tournament. The app-level
+-- gate (lib/tournaments.ts) stops every route a browser can take, which covers
+-- every real team; this stops the anon key itself, which ships in the client
+-- bundle and is public knowledge. The subquery reads `tournaments`, which anon
+-- may SELECT under the policy above, so it evaluates normally.
 CREATE POLICY "Anyone can insert registrations"
   ON registrations FOR INSERT
-  WITH CHECK (payment_status = 'pending_payment');
+  WITH CHECK (
+    payment_status = 'pending_payment'
+    AND EXISTS (
+      SELECT 1 FROM tournaments t
+       WHERE t.id = registrations.tournament_id
+         AND t.registration_open
+    )
+  );
 
 -- No SELECT policy, by design. Registrants have no login, so the anon role must
 -- not read registration rows back — they hold contact names, phone numbers and
@@ -278,16 +320,108 @@ CREATE POLICY "Anyone can insert players"
 
 
 -- ============================================================================
+--  TEAM SELF-SERVICE PORTAL  (app/team/*, /api/team/*)
+-- ============================================================================
+--  Teams log in with their reference + the phone number they registered with,
+--  and correct their own details. Photos and contact details apply instantly.
+--  Anything that establishes WHO A PLAYER IS — name, date of birth,
+--  nationality, proof-of-age document — is queued for the organiser instead,
+--  because this is an age-restricted tournament and a silently editable date of
+--  birth would make the eligibility check meaningless.
+--
+--  Neither table below gets a policy. RLS is enabled and left empty, so the
+--  anon role cannot touch either one: `pending_changes` holds minors' names and
+--  dates of birth, and `team_login_attempts` would otherwise let anyone read or
+--  forge the rate-limit ledger that protects login. Both are reached only by
+--  the service role inside /api/team/* and /api/admin/*.
+-- ----------------------------------------------------------------------------
+
+-- A change a team has asked for that the organiser has not yet resolved.
+--
+-- old_value is kept so the admin screen can show what it is replacing, and so a
+-- rejection has something to revert to. For a proof-of-age replacement,
+-- new_value holds a STORAGE PATH under `<regId>/pending/<changeId>` rather than
+-- a literal value: the new document is uploaded immediately but does not become
+-- the player's document until approval moves it to the canonical path.
+CREATE TABLE IF NOT EXISTS pending_changes (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  registration_id UUID NOT NULL REFERENCES registrations(id) ON DELETE CASCADE,
+  -- NULL means the field lives on `registrations` (contact details, officials).
+  player_id       UUID REFERENCES players(id) ON DELETE CASCADE,
+  field           TEXT NOT NULL,
+  old_value       TEXT,
+  new_value       TEXT,
+  status          TEXT NOT NULL DEFAULT 'pending'
+                    CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  resolved_at     TIMESTAMPTZ,
+  -- Set when the team has seen and dismissed the "could not be applied" note.
+  -- Only ever set on rejected rows; approved ones are never announced.
+  dismissed_at    TIMESTAMPTZ
+);
+
+-- The admin queue reads pending rows newest-first; the team page reads its own
+-- rows on every load. Both are covered here.
+CREATE INDEX IF NOT EXISTS pending_changes_status_idx
+  ON pending_changes (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS pending_changes_registration_idx
+  ON pending_changes (registration_id, status);
+
+-- Login ledger, for rate limiting. Vercel runs several lambdas, so an
+-- in-process counter would reset unpredictably and count only a fraction of
+-- attempts — this has to be shared state.
+CREATE TABLE IF NOT EXISTS team_login_attempts (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- The reference TYPED IN, which on a failed attempt may match no real team.
+  -- Deliberately not a foreign key for that reason.
+  reference    TEXT,
+  ip           TEXT,
+  attempted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  succeeded    BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS team_login_attempts_reference_idx
+  ON team_login_attempts (reference, attempted_at DESC);
+CREATE INDEX IF NOT EXISTS team_login_attempts_ip_idx
+  ON team_login_attempts (ip, attempted_at DESC);
+
+ALTER TABLE pending_changes      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_login_attempts  ENABLE ROW LEVEL SECURITY;
+
+-- Same defensive sweep as above: drop whatever policies exist on these two
+-- before asserting that they have none, so a policy added by hand in the
+-- dashboard cannot quietly survive a re-run of this file.
+DO $$
+DECLARE pol record;
+BEGIN
+  FOR pol IN
+    SELECT policyname, tablename
+      FROM pg_policies
+     WHERE schemaname = 'public'
+       AND tablename IN ('pending_changes', 'team_login_attempts')
+  LOOP
+    EXECUTE format('DROP POLICY %I ON public.%I', pol.policyname, pol.tablename);
+    RAISE NOTICE 'dropped pre-existing policy "%" on %', pol.policyname, pol.tablename;
+  END LOOP;
+END $$;
+
+
+-- ============================================================================
 --  VERIFICATION — this prints the final policy set. Expect exactly 3 rows:
 --
 --    players        Anyone can insert players        INSERT   with_check: true
---    registrations  Anyone can insert registrations  INSERT   with_check: (payment_status = 'pending_payment')
+--    registrations  Anyone can insert registrations  INSERT   with_check: ((payment_status = 'pending_payment') AND (EXISTS (SELECT 1 FROM tournaments t WHERE ((t.id = registrations.tournament_id) AND t.registration_open))))
 --    tournaments    Anyone can read tournaments      SELECT   qual: true
+--
+--  pending_changes and team_login_attempts must print NOTHING — they are
+--  service-role only. A row for either one is a policy this file did not
+--  create; investigate it.
 --
 --  Any additional row is a policy this file did not create — investigate it.
 -- ============================================================================
 SELECT tablename, policyname, cmd, roles, qual, with_check
   FROM pg_policies
  WHERE schemaname = 'public'
-   AND tablename IN ('tournaments', 'registrations', 'players')
+   AND tablename IN ('tournaments', 'registrations', 'players',
+                     'pending_changes', 'team_login_attempts')
  ORDER BY tablename, cmd, policyname;
