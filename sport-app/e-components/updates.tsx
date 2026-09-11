@@ -10,6 +10,7 @@ import {
   Bell,
   ArrowRight,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function Updates() {
   return (
@@ -102,13 +103,45 @@ export default function Updates() {
 
         {/* Grid for News Cards */}
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {/* Card 1 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img
+              <Image
+                src="/facebook-news01.jpeg"
+                alt="News"
+                fill
+                className="object-cover"
+              />
+              <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
+                UPDATES
+              </span>
+            </div>
+            <div className="p-3.5">
+              <h2 className="text-sm font-bold leading-snug">
+                NATHANIEL IDOWU U-16 LEAGUE EXPLODES INTO LIFE WITH 22 GOALS ON
+                OPENING DAY
+              </h2>
+              <p className="mt-1 text-[10px] text-slate-400">July 13 2026</p>
+              <p className="mt-1 text-xs text-slate-300">
+                Fortune FA, Bright Stars and Divinely Blessed Win as Valentine
+                Aniako and Ugwuokolie Chidalu Hit Hat-tricks
+              </p>
+              <a
+                href="https://www.facebook.com/story.php?story_fbid=122116692015427811&id=61592834339885&rdid=7iIBqPwZ0BPSDFEG#"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#16a34a] hover:underline"
+              >
+                <span>Read More</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </article>
+
+          <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
+            <div className="relative h-36 w-full">
+              <Image
                 src="/news01.png"
                 alt="News"
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 TOURNAMENTS
@@ -120,7 +153,8 @@ export default function Updates() {
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">July 13 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-               Anticipating a thrilling experience and promising an unforgettable event for all attendees.
+                Anticipating a thrilling experience and promising an
+                unforgettable event for all attendees.
               </p>
               <a
                 href="https://thenationonlineng.net/maracana-sports-complex-to-host-nathaniel-idowu-summer-camp/"
@@ -132,13 +166,13 @@ export default function Updates() {
             </div>
           </article>
 
-          {/* Card 2 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img
+              <Image
                 src="/news02.png"
                 alt="News"
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 UPDATES
@@ -146,7 +180,8 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-                Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young Athletes In Lagos
+                Nathaniel Idowu Foundation To Host Maiden Summer Camp For Young
+                Athletes In Lagos
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">July 12 2026</p>
               <p className="mt-1 text-xs text-slate-300">
@@ -162,13 +197,13 @@ export default function Updates() {
             </div>
           </article>
 
-          {/* Card 3 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img
+              <Image
                 src="/news03.png"
                 alt="News"
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 EVENTS
@@ -176,11 +211,12 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-               Organisers pick Maracana Stadium for Nathaniel Idowu Summer Camp
+                Organisers pick Maracana Stadium for Nathaniel Idowu Summer Camp
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">July 13 2026</p>
               <p className="mt-1 text-xs text-slate-300">
-                Follow the latest updates on the preparations for the upcoming summer camp.
+                Follow the latest updates on the preparations for the upcoming
+                summer camp.
               </p>
               <a
                 href="https://guardian.ng/sport/organisers-pick-maracana-stadium-for-nathaniel-idowu-summer-camp/"
@@ -192,13 +228,13 @@ export default function Updates() {
             </div>
           </article>
 
-          {/* Card 4 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img
+              <Image
                 src="/news04.png"
                 alt="News"
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 PARTNERSHIPS
@@ -222,13 +258,13 @@ export default function Updates() {
             </div>
           </article>
 
-          {/* Card 5 */}
           <article className="overflow-hidden rounded-lg border border-slate-800 bg-[#0f192e] transition hover:border-slate-700">
             <div className="relative h-36 w-full">
-              <img
+              <Image
                 src="/news05.png"
                 alt="News"
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
               />
               <span className="absolute bottom-2 left-2 rounded bg-[#16a34a] px-1.5 py-0.5 text-[10px] font-bold uppercase">
                 ATHLETE SPOTLIGHT
@@ -236,7 +272,8 @@ export default function Updates() {
             </div>
             <div className="p-3.5">
               <h2 className="text-sm font-bold leading-snug">
-               Nathaniel Idowu Summer Camp 1.0 Kicks Off As 321 Children Begin Month-Long Sports Development Programme
+                Nathaniel Idowu Summer Camp 1.0 Kicks Off As 321 Children Begin
+                Month-Long Sports Development Programme
               </h2>
               <p className="mt-1 text-[10px] text-slate-400">August 4 2026</p>
               <p className="mt-1 text-xs text-slate-300">
@@ -251,17 +288,15 @@ export default function Updates() {
               </a>
             </div>
           </article>
-
-         
         </div>
 
         {/* View All Button */}
         <div className="mt-6 flex justify-center">
           <a href="/news">
-          <button className="flex items-center gap-1.5 rounded-md border border-slate-700 bg-[#0f192e] px-5 py-2 text-xs font-medium transition hover:bg-slate-800">
-            <span>View All News & Events</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+            <button className="flex items-center gap-1.5 rounded-md border border-slate-700 bg-[#0f192e] px-5 py-2 text-xs font-medium transition hover:bg-slate-800">
+              <span>View All News & Events</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
           </a>
         </div>
       </main>
@@ -275,9 +310,11 @@ export default function Updates() {
           <div className="mt-3 space-y-3">
             {/* Trending Item 1 */}
             <div className="flex gap-2.5">
-              <img
+              <Image
                 src="/news01.png"
                 alt="Trending"
+                height={48}
+                width={64}
                 className="h-12 w-16 rounded object-cover"
               />
               <div>
@@ -290,9 +327,11 @@ export default function Updates() {
 
             {/* Trending Item 2 */}
             <div className="flex gap-2.5">
-              <img
+              <Image
                 src="/news02.png"
                 alt="Trending"
+                height={48}
+                width={64}
                 className="h-12 w-16 rounded object-cover"
               />
               <div>
@@ -305,9 +344,11 @@ export default function Updates() {
 
             {/* Trending Item 3 */}
             <div className="flex gap-2.5">
-              <img
+              <Image
                 src="/news03.png"
                 alt="Trending"
+                height={48}
+                width={64}
                 className="h-12 w-16 rounded object-cover"
               />
               <div>
@@ -320,9 +361,11 @@ export default function Updates() {
 
             {/* Trending Item 4 */}
             <div className="flex gap-2.5">
-              <img
+              <Image
                 src="/news04.png"
                 alt="Trending"
+                height={48}
+                width={64}
                 className="h-12 w-16 rounded object-cover"
               />
               <div>
