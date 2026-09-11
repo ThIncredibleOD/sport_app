@@ -324,7 +324,7 @@ export default function PlayerRegistration() {
           <div>
             <label className="block text-xs font-medium text-slate-200 mb-1">
               Height{" "}
-              <span className="font-normal text-slate-400">(optional)</span>
+              
             </label>
             <div className="relative">
               <input
@@ -355,7 +355,7 @@ export default function PlayerRegistration() {
           <div>
             <label className="block text-xs font-medium text-slate-200 mb-1">
               Preferred Foot{" "}
-              <span className="font-normal text-slate-400">(optional)</span>
+            
             </label>
             <select
               name="preferredFoot"
