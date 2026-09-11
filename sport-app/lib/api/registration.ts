@@ -13,6 +13,9 @@ export interface PlayerInput {
   nationality: string;
   position: string;
   jersey_number?: string;
+  /** Unity Cup only; "" from every other flow. Stored as NULL when blank. */
+  height_cm?: string;
+  preferred_foot?: string;
   photo?: File | null; // Player picture — PUBLIC (meant to be shown on squad pages)
   proof_of_age: File; // PRIVATE (minor's document)
 }
@@ -800,6 +803,11 @@ export async function submitRegistration(
         nationality: player.nationality,
         position: player.position,
         jersey_number: player.jersey_number ?? null,
+        // `||` not `??`: an untouched field arrives as "", and a stored empty
+        // string would make every display surface print a blank instead of
+        // skipping the field.
+        height_cm: player.height_cm || null,
+        preferred_foot: player.preferred_foot || null,
         photo_url: photoUrl, // public URL (safe to expose)
         proof_of_age_path: paths.age, // private path (sign on demand)
       });

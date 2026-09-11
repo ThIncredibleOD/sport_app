@@ -69,7 +69,18 @@ ALTER TABLE players
   ADD COLUMN IF NOT EXISTS photo_url TEXT,
   ADD COLUMN IF NOT EXISTS consent_form_path TEXT,
   ADD COLUMN IF NOT EXISTS proof_of_age_path TEXT,
-  ADD COLUMN IF NOT EXISTS jersey_number TEXT;
+  ADD COLUMN IF NOT EXISTS jersey_number TEXT,
+  ADD COLUMN IF NOT EXISTS height_cm TEXT,
+  ADD COLUMN IF NOT EXISTS preferred_foot TEXT;
+
+-- height_cm and preferred_foot are collected by the Unity Cup form only; rows
+-- from the other cups leave them NULL. TEXT rather than INTEGER, following
+-- jersey_number: the insert path is shared by all three cups, and a TEXT column
+-- cannot fail an insert the way an integer would on a stray non-numeric value.
+--
+-- RUN THIS BEFORE DEPLOYING THE CODE THAT WRITES THEM. lib/api/registration.ts
+-- has one insert path for every cup, so a missing column here fails EVERY
+-- registration, not just Unity's.
 
 ALTER TABLE registrations
   ADD COLUMN IF NOT EXISTS payment_receipt_path TEXT,

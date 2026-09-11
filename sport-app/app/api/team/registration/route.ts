@@ -89,6 +89,8 @@ export async function GET(request: NextRequest) {
           nationality,
           jersey_number,
           position,
+          height_cm,
+          preferred_foot,
           photo_url,
           proof_of_age_path,
           created_at
@@ -171,6 +173,8 @@ export async function GET(request: NextRequest) {
       nationality: player.nationality,
       jersey_number: player.jersey_number,
       position: player.position,
+      height_cm: player.height_cm,
+      preferred_foot: player.preferred_foot,
       photo_url: player.photo_url,
       has_proof_of_age: Boolean(player.proof_of_age_path),
       created_at: player.created_at,

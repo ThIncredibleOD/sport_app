@@ -19,6 +19,7 @@ import {
 } from "@/context/sportContext";
 import PhotoUpload from "@/components/PhotoUpload";
 import { compressDocumentImage, kb, MAX_UPLOAD_BYTES } from "@/lib/images";
+import { cmToFeetInches, PREFERRED_FOOT_OPTIONS } from "@/lib/height";
 
 const BACK_ROUTE = "/register/unity-cup/medics";
 const REVIEW_ROUTE = "/register/unity-cup/review";
@@ -319,12 +320,63 @@ export default function PlayerRegistration() {
             </select>
           </div>
 
+          {/* Height (cm) — feet/inches shown beneath, derived not stored */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Height{" "}
+              <span className="font-normal text-slate-400">(optional)</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                name="heightCm"
+                inputMode="numeric"
+                maxLength={3}
+                value={currentPlayer.heightCm}
+                onChange={handleChange}
+                placeholder="e.g. 175"
+                className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 pr-10 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none transition-all"
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                cm
+              </span>
+            </div>
+            {/* Only rendered once the value converts, so a half-typed or
+                nonsensical number simply shows nothing rather than "0'0"". */}
+            {cmToFeetInches(currentPlayer.heightCm) && (
+              <p className="mt-1 text-[10px] text-slate-400">
+                {currentPlayer.heightCm} cm ·{" "}
+                {cmToFeetInches(currentPlayer.heightCm)}
+              </p>
+            )}
+          </div>
+
+          {/* Preferred Foot */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Preferred Foot{" "}
+              <span className="font-normal text-slate-400">(optional)</span>
+            </label>
+            <select
+              name="preferredFoot"
+              value={currentPlayer.preferredFoot}
+              onChange={handleChange}
+              className="w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-xs text-slate-200 focus:border-[#16a34a] focus:outline-none transition-all"
+            >
+              <option value="">Select Preferred Foot</option>
+              {PREFERRED_FOOT_OPTIONS.map((foot) => (
+                <option key={foot} value={foot}>
+                  {foot}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Warning */}
           <div className="flex items-start gap-1.5 pt-1 text-[11px] text-amber-500">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
             <span>
-              Bring each player&apos;s signed parental consent form and their
-              original proof of age to the registration desk.
+              Please ensure all player information is accurate.
             </span>
           </div>
 

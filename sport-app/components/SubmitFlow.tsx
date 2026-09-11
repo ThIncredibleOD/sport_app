@@ -193,6 +193,8 @@ export default function SubmitFlow({
           nationality: p.nationality,
           jersey_number: p.jerseyNumber,
           position: p.position,
+          height_cm: p.heightCm,
+          preferred_foot: p.preferredFoot,
           photo: p.passport,
         })),
         submittedAtLabel,
@@ -206,6 +208,8 @@ export default function SubmitFlow({
         nationality: p.nationality,
         position: p.position,
         jersey_number: p.jerseyNumber,
+        height_cm: p.heightCm,
+        preferred_foot: p.preferredFoot,
         photo: p.passport,
         proof_of_age: p.proofOfAge as File,
       }));

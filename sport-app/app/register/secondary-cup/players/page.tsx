@@ -323,8 +323,7 @@ export default function PlayerRegistration() {
           <div className="flex items-start gap-1.5 pt-1 text-[11px] text-amber-500">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
             <span>
-              Bring each player&apos;s signed parental consent form and their
-              original proof of age to the registration desk.
+              Please ensure all player information is accurate.
             </span>
           </div>
 

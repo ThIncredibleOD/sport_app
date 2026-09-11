@@ -30,6 +30,16 @@ type Props = {
   playerId?: string;
   /** Input type — "date" for dates, "tel" for phones, else text. */
   type?: "text" | "date" | "tel" | "email";
+  /**
+   * When set, the editor is a dropdown offering exactly these values instead of
+   * a text box, and `placeholder` becomes the blank entry's label.
+   *
+   * This is a per-FIELD choice, not a per-mode one, so it says nothing about
+   * whether the value is checked — which is the only thing the two modes are
+   * allowed to differ on. Preferred foot uses it because the server accepts
+   * three exact strings and a free-text box would only invite a rejection.
+   */
+  options?: readonly string[];
   placeholder?: string;
   maxLength?: number;
   /** Called with the saved value so the parent can update its own copy. */
@@ -45,6 +55,7 @@ export default function EditableField({
   mode,
   playerId,
   type = "text",
+  options,
   placeholder,
   maxLength = 200,
   onSaved,
@@ -173,16 +184,35 @@ export default function EditableField({
       <label className="block text-[11px] font-medium tracking-wide text-slate-500 uppercase">
         {label}
       </label>
-      <input
-        type={type}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        disabled={saving}
-        autoFocus
-        className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white placeholder-slate-600 transition focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none disabled:opacity-60"
-      />
+      {options ? (
+        <select
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          disabled={saving}
+          autoFocus
+          className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white transition focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none disabled:opacity-60"
+        >
+          {/* Clearing has to stay possible — a wrong pick must be fixable, not
+              just replaceable. */}
+          <option value="">{placeholder ?? "Not set"}</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type={type}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          disabled={saving}
+          autoFocus
+          className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-white placeholder-slate-600 transition focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none disabled:opacity-60"
+        />
+      )}
 
       {error && <p className="text-[11px] text-amber-400">{error}</p>}
 

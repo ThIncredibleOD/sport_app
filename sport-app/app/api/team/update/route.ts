@@ -7,6 +7,11 @@ import {
   isInstantPlayerField,
   isInstantRegistrationField,
 } from "@/lib/team-fields";
+import {
+  isValidPreferredFoot,
+  MAX_HEIGHT_CM,
+  MIN_HEIGHT_CM,
+} from "@/lib/height";
 
 /**
  * POST /api/team/update  { field, value, playerId? }
@@ -50,6 +55,29 @@ const RULES: Record<
         : "A jersey number should be up to three digits.",
   },
   position: { maxLength: 40 },
+  height_cm: {
+    maxLength: 3,
+    // Optional, so blank is allowed. The range mirrors lib/height.ts — a value
+    // outside it would silently stop rendering as a height everywhere.
+    check: (v) => {
+      const trimmed = v.trim();
+      if (trimmed === "") return null;
+      if (!/^\d{1,3}$/.test(trimmed)) {
+        return "A height in centimetres should be a whole number.";
+      }
+      const cm = Number(trimmed);
+      return cm < MIN_HEIGHT_CM || cm > MAX_HEIGHT_CM
+        ? `A height should be between ${MIN_HEIGHT_CM}cm and ${MAX_HEIGHT_CM}cm.`
+        : null;
+    },
+  },
+  preferred_foot: {
+    maxLength: 10,
+    // Blank clears it, which has to stay possible — a team that picked the
+    // wrong foot needs to be able to unset it, not just change it.
+    check: (v) =>
+      isValidPreferredFoot(v) ? null : "Preferred foot should be Left, Right or Both.",
+  },
 };
 
 export async function POST(request: NextRequest) {

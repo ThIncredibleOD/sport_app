@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { registrationReference } from "@/lib/reference";
 import EditableField from "@/components/team/EditableField";
+import { PREFERRED_FOOT_OPTIONS } from "@/lib/height";
 import PhotoField from "@/components/team/PhotoField";
 import DocumentField from "@/components/team/DocumentField";
 
@@ -29,6 +30,9 @@ interface Player {
   nationality: string | null;
   jersey_number: string | null;
   position: string | null;
+  /** Unity Cup only — null on every other cup's players. */
+  height_cm: string | null;
+  preferred_foot: string | null;
   /** PUBLIC bucket URL — safe to render directly. */
   photo_url: string | null;
   /**
@@ -634,6 +638,41 @@ export default function TeamDashboardPage() {
                           }
                         />
                       </div>
+
+                      {/* Unity Cup only. A league or secondary team never
+                          sees these two boxes, because their players have no
+                          height or foot to show and two permanent em-dashes
+                          would only raise questions about missing data. */}
+                      {reg.tournaments?.slug === "unity-cup" && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <EditableField
+                            label="Height (cm)"
+                            value={str(player.height_cm)}
+                            field="height_cm"
+                            mode="instant"
+                            playerId={player.id}
+                            maxLength={3}
+                            placeholder="—"
+                            compact
+                            onSaved={(v) =>
+                              patchPlayer(player.id, "height_cm", v)
+                            }
+                          />
+                          <EditableField
+                            label="Preferred foot"
+                            value={str(player.preferred_foot)}
+                            field="preferred_foot"
+                            mode="instant"
+                            playerId={player.id}
+                            options={PREFERRED_FOOT_OPTIONS}
+                            placeholder="Not set"
+                            compact
+                            onSaved={(v) =>
+                              patchPlayer(player.id, "preferred_foot", v)
+                            }
+                          />
+                        </div>
+                      )}
 
                       <div className="border-t border-white/5 pt-3">
                         <DocumentField

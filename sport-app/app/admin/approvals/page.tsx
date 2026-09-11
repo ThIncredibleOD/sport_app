@@ -23,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import { registrationReference } from "@/lib/reference";
+import { formatHeight } from "@/lib/height";
 import ChangesTab from "@/components/admin/ChangesTab";
 
 /* -------------------------------------------------------------------------- */
@@ -36,6 +37,9 @@ interface Player {
   nationality: string | null;
   jersey_number: string | null;
   position: string | null;
+  /** Unity Cup only — null on every other cup's players. */
+  height_cm: string | null;
+  preferred_foot: string | null;
   /** PRIVATE bucket path, not a URL — traded for a signed URL on demand. */
   proof_of_age_path: string | null;
   /** PUBLIC bucket URL — safe to render directly. */
@@ -710,6 +714,10 @@ export default function AdminRegistrationsPage() {
                                     player.dob
                                       ? `born ${formatDate(player.dob)}`
                                       : null,
+                                    // Unity Cup only: both are null elsewhere,
+                                    // and the filter below drops them.
+                                    formatHeight(player.height_cm),
+                                    player.preferred_foot,
                                   ]
                                     .filter(Boolean)
                                     .join(" · ") || "No details recorded"}

@@ -14,12 +14,15 @@ import {
   Flag,
   Shirt,
   MapPin,
+  Ruler,
+  Footprints,
   AlertTriangle,
   CheckCircle2,
   ClipboardList,
   FileText,
 } from "lucide-react";
 import { useRegister, playerBlockingGaps, officialBlockingGaps } from "@/context/sportContext";
+import { formatHeight } from "@/lib/height";
 
 type Props = {
   /** Tournament logo shown in the header, e.g. "/under1.png". */
@@ -400,6 +403,21 @@ export default function RegistrationReview({
                           <Calendar className="h-3 w-3" />
                           {player.dateOfBirth || "—"}
                         </span>
+                        {/* Unity Cup only. Rendered solely when a value is
+                            present, so the league and secondary reviews show
+                            exactly the four entries they always have. */}
+                        {formatHeight(player.heightCm) && (
+                          <span className="inline-flex items-center gap-1">
+                            <Ruler className="h-3 w-3" />
+                            {formatHeight(player.heightCm)}
+                          </span>
+                        )}
+                        {player.preferredFoot.trim() && (
+                          <span className="inline-flex items-center gap-1">
+                            <Footprints className="h-3 w-3" />
+                            {player.preferredFoot}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-1 flex items-center gap-2 text-[10px]">
                         <span

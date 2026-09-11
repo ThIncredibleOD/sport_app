@@ -29,7 +29,16 @@ export const INSTANT_REGISTRATION_FIELDS = [
 ] as const;
 
 /** Player-level fields a team may change, applied immediately. */
-export const INSTANT_PLAYER_FIELDS = ["jersey_number", "position"] as const;
+export const INSTANT_PLAYER_FIELDS = [
+  "jersey_number",
+  "position",
+  // Not identity fields — a height or a preferred foot says nothing about who a
+  // player is or how old they are, so they carry none of the eligibility risk
+  // that puts a date of birth in the queue. Same tier as jersey number: a typo
+  // should be fixable without waiting for the organiser.
+  "height_cm",
+  "preferred_foot",
+] as const;
 
 /** Registration-level fields that need the organiser's approval. */
 export const APPROVAL_REGISTRATION_FIELDS = [
@@ -121,6 +130,8 @@ export const FIELD_LABELS: Record<string, string> = {
   academy_name: "Academy name",
   jersey_number: "Jersey number",
   position: "Position",
+  height_cm: "Height (cm)",
+  preferred_foot: "Preferred foot",
   full_name: "Player name",
   dob: "Date of birth",
   nationality: "Nationality",
