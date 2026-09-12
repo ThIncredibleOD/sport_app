@@ -13,8 +13,6 @@ import RegistrationClosed from "@/components/RegistrationClosed";
 import { tournamentByFlow } from "@/lib/tournaments";
 import { useState } from "react";
 
-const PLAYER_COUNT = 25;
-
 const TOURNAMENT = tournamentByFlow("league");
 
 export default function LeagueLayout({
@@ -52,7 +50,7 @@ export default function LeagueLayout({
     createEmptyOfficial(),
   ]);
   const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: PLAYER_COUNT }, () => createEmptyPlayer()),
+    Array.from({ length: TOURNAMENT.playerCount }, () => createEmptyPlayer()),
   );
 
   // Closed tournaments show the notice instead of the flow. Placed AFTER every

@@ -3,6 +3,7 @@ import { getSupabaseServer } from "@/lib/supabase-server";
 import { errorMessage } from "@/lib/errors";
 import { verifyTeamSession } from "@/lib/team-auth";
 import { fieldLabel } from "@/lib/team-fields";
+import { playerLimitForSlug } from "@/lib/tournaments";
 
 /**
  * GET /api/team/registration
@@ -180,8 +181,22 @@ export async function GET(request: NextRequest) {
       created_at: player.created_at,
     }));
 
+    /* --------------------- How many players are allowed ------------------- */
+    // Sent so the page knows whether to offer "Add player" at all. The number
+    // is not authorization — /api/team/add-player counts the roster itself —
+    // but the page cannot show "19 of 20" without it.
+    const joinedTournament = registration.tournaments as
+      | { slug?: string }
+      | { slug?: string }[]
+      | null;
+    const slug =
+      (Array.isArray(joinedTournament)
+        ? joinedTournament[0]?.slug
+        : joinedTournament?.slug) ?? "";
+
     return NextResponse.json({
       registration: { ...registrationRow, players: safePlayers },
+      playerLimit: playerLimitForSlug(slug),
       notices,
     });
   } catch (err) {

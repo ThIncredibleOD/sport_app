@@ -13,8 +13,6 @@ import RegistrationClosed from "@/components/RegistrationClosed";
 import { tournamentByFlow } from "@/lib/tournaments";
 import { useState } from "react";
 
-const PLAYER_COUNT = 18;
-
 const TOURNAMENT = tournamentByFlow("secondary-cup");
 
 export default function SecondaryCupLayout({
@@ -52,7 +50,7 @@ export default function SecondaryCupLayout({
     createEmptyOfficial(),
   ]);
   const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: PLAYER_COUNT }, () => createEmptyPlayer()),
+    Array.from({ length: TOURNAMENT.playerCount }, () => createEmptyPlayer()),
   );
 
   // See the note in app/register/league/layout.tsx — the guard sits after the

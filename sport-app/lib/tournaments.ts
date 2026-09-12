@@ -43,6 +43,15 @@ export type Tournament = {
   logo: string;
   /** false = no new entries. Existing registrations are untouched. */
   registrationOpen: boolean;
+  /**
+   * How many players a squad may hold in this tournament.
+   *
+   * Two things read it, and they must not be able to disagree: the registration
+   * flow builds this many blank player forms, and the team portal refuses to add
+   * a player past it. It lives here rather than in each layout so the server can
+   * see it at all — a limit only the browser knows is not a limit.
+   */
+  playerCount: number;
 };
 
 export const TOURNAMENTS: Tournament[] = [
@@ -53,8 +62,11 @@ export const TOURNAMENTS: Tournament[] = [
     subtitle: "The Nathaniel Idowu U16 Football Cup",
     logo: "/under1.png",
     // CLOSED — entries for the U16 league are complete. Teams already
-    // registered keep their entry; this only refuses new ones.
+    // registered keep their entry; this only refuses new ones. A team that IS
+    // registered can still add players up to playerCount through the portal:
+    // this flag is about new teams, not about a squad fixing its own roster.
     registrationOpen: false,
+    playerCount: 25,
   },
   {
     flow: "secondary-cup",
@@ -63,6 +75,7 @@ export const TOURNAMENTS: Tournament[] = [
     subtitle: "The Nathaniel Idowu 7s Football League",
     logo: "/secondary.png",
     registrationOpen: true,
+    playerCount: 18,
   },
   {
     flow: "unity-cup",
@@ -71,6 +84,7 @@ export const TOURNAMENTS: Tournament[] = [
     subtitle: "The Nathaniel Idowu Unity Cup",
     logo: "/unity.png",
     registrationOpen: true,
+    playerCount: 20,
   },
 ];
 
@@ -92,4 +106,19 @@ export function tournamentByFlow(flow: FlowSegment): Tournament {
  */
 export function isRegistrationOpen(slug: string): boolean {
   return TOURNAMENTS.some((t) => t.slug === slug && t.registrationOpen);
+}
+
+/**
+ * How many players a squad in this tournament may hold.
+ *
+ * An UNKNOWN slug returns 0, for the same reason isRegistrationOpen treats one
+ * as closed: this is the number the add-player route compares a roster against,
+ * so a slug it cannot resolve has to refuse the addition rather than wave it
+ * through. 0 means "no room", which is the safe direction.
+ *
+ * Deliberately NOT gated on registrationOpen. Closing a tournament stops new
+ * TEAMS entering; a team already registered can still complete its own squad.
+ */
+export function playerLimitForSlug(slug: string): number {
+  return TOURNAMENTS.find((t) => t.slug === slug)?.playerCount ?? 0;
 }

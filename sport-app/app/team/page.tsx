@@ -18,6 +18,7 @@ import EditableField from "@/components/team/EditableField";
 import { PREFERRED_FOOT_OPTIONS } from "@/lib/height";
 import PhotoField from "@/components/team/PhotoField";
 import DocumentField from "@/components/team/DocumentField";
+import AddPlayerForm from "@/components/team/AddPlayerForm";
 
 /* -------------------------------------------------------------------------- */
 /*  Types — the shape /api/team/registration returns                          */
@@ -200,6 +201,8 @@ export default function TeamDashboardPage() {
 
   const [registration, setRegistration] = useState<Registration | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
+  /** How many players this tournament allows. 0 until the record loads. */
+  const [playerLimit, setPlayerLimit] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
@@ -231,6 +234,9 @@ export default function TeamDashboardPage() {
         );
 
         setRegistration(reg);
+        setPlayerLimit(
+          typeof data.playerLimit === "number" ? data.playerLimit : 0,
+        );
         setNotices((data.notices ?? []) as Notice[]);
         setError("");
       } catch (err) {
@@ -276,6 +282,18 @@ export default function TeamDashboardPage() {
     },
     [],
   );
+
+  /**
+   * A player the team just added, appended without refetching.
+   *
+   * Goes on the end, which is also where the next page load will put them: the
+   * roster is sorted by created_at, and this row is the newest.
+   */
+  const appendPlayer = useCallback((player: Player) => {
+    setRegistration((prev) =>
+      prev ? { ...prev, players: [...prev.players, player] } : prev,
+    );
+  }, []);
 
   async function dismissNotice(changeId: string) {
     // Removed from the list first: the request is idempotent and the note is
@@ -541,7 +559,11 @@ export default function TeamDashboardPage() {
         {/* ----------------------------- Players ---------------------------- */}
         <Section
           title="Players"
-          subtitle={`${reg.players.length} on your roster`}
+          subtitle={
+            playerLimit > 0
+              ? `${reg.players.length} of ${playerLimit} on your roster`
+              : `${reg.players.length} on your roster`
+          }
           icon={Users}
         >
           {reg.players.length === 0 ? (
@@ -690,11 +712,30 @@ export default function TeamDashboardPage() {
               ))}
             </div>
           )}
+
+          {/* Adding is self-service, up to the tournament's own limit. The
+              button disappearing when a roster is full is a convenience, not
+              the gate — /api/team/add-player counts the roster itself. */}
+          <div className="mt-4 border-t border-white/5 pt-4">
+            {playerLimit > 0 && reg.players.length < playerLimit ? (
+              <AddPlayerForm
+                remaining={playerLimit - reg.players.length}
+                showHeightAndFoot={reg.tournaments?.slug === "unity-cup"}
+                onAdded={appendPlayer}
+              />
+            ) : (
+              playerLimit > 0 && (
+                <p className="text-xs text-slate-500">
+                  Your squad is full at {playerLimit} players.
+                </p>
+              )
+            )}
+          </div>
         </Section>
 
         <p className="pb-4 text-center text-xs leading-relaxed text-slate-600">
-          Need a player added or removed, or something here that you can&apos;t
-          change? Contact the organiser.
+          Need a player removed, or something here that you can&apos;t change?
+          Contact the organiser.
         </p>
       </main>
     </div>
