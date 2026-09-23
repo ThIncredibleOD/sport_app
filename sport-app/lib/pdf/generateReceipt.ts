@@ -2,6 +2,7 @@
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { cmToFeetInches, parseHeightCm } from "@/lib/height";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -13,6 +14,9 @@ export interface ReceiptPlayer {
   nationality: string;
   jersey_number?: string;
   position: string;
+  /** Unity Cup only — centimetres, as typed. Blank on every other flow. */
+  height_cm?: string;
+  preferred_foot?: string;
   /** In-memory passport photo. Compressed to a small thumbnail for the PDF. */
   photo?: File | null;
 }
@@ -283,9 +287,36 @@ export async function generateRegistrationReceipt(
   doc.text(`Players (${filledCount})`, marginX, y);
   y += 3;
 
+  // Height and preferred foot are collected by the Unity Cup form only. The
+  // columns appear solely when at least one player carries one, so a league or
+  // secondary-cup roster renders the same seven columns — and the same widths —
+  // it always has. Two extra empty columns on every other cup's PDF would be a
+  // visible regression for a field they never fill in.
+  const hasPhysical = data.players.some(
+    (p) => parseHeightCm(p.height_cm) !== null || (p.preferred_foot ?? "").trim(),
+  );
+
+  /** "175 cm" over `5'9"` — two lines, so the column stays narrow. */
+  const heightCell = (value?: string): string => {
+    const cm = parseHeightCm(value);
+    if (cm === null) return "-";
+    return `${cm} cm\n${cmToFeetInches(value)}`;
+  };
+
   autoTable(doc, {
     startY: y,
-    head: [["#", "Photo", "Full Name", "DOB", "Nationality", "Jersey", "Position"]],
+    head: [
+      [
+        "#",
+        "Photo",
+        "Full Name",
+        "DOB",
+        "Nationality",
+        "Jersey",
+        "Position",
+        ...(hasPhysical ? ["Height", "Foot"] : []),
+      ],
+    ],
     body: data.players.map((p, i) => [
       String(i + 1),
       "", // photo drawn in didDrawCell
@@ -294,6 +325,9 @@ export async function generateRegistrationReceipt(
       p.nationality || "-",
       p.jersey_number || "-",
       p.position || "-",
+      ...(hasPhysical
+        ? [heightCell(p.height_cm), p.preferred_foot || "-"]
+        : []),
     ]),
     theme: "grid",
     headStyles: {
@@ -309,11 +343,24 @@ export async function generateRegistrationReceipt(
       valign: "middle",
       textColor: SLATE,
     },
-    columnStyles: {
-      0: { cellWidth: 8, halign: "center" },
-      1: { cellWidth: 15, halign: "center" },
-      5: { cellWidth: 14, halign: "center" },
-    },
+    // Nine columns have to share the same 182mm of content width as seven, so
+    // the extended layout pins DOB and Position too and leaves Full Name and
+    // Nationality to absorb what's left.
+    columnStyles: hasPhysical
+      ? {
+          0: { cellWidth: 8, halign: "center" },
+          1: { cellWidth: 15, halign: "center" },
+          3: { cellWidth: 20 },
+          5: { cellWidth: 14, halign: "center" },
+          6: { cellWidth: 24 },
+          7: { cellWidth: 16, halign: "center" },
+          8: { cellWidth: 14, halign: "center" },
+        }
+      : {
+          0: { cellWidth: 8, halign: "center" },
+          1: { cellWidth: 15, halign: "center" },
+          5: { cellWidth: 14, halign: "center" },
+        },
     margin: { left: marginX, right: marginX },
     didDrawCell: (cell) => {
       if (cell.section === "body" && cell.column.index === 1) {

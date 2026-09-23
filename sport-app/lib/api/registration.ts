@@ -1,5 +1,6 @@
 import { supabase } from "../supabase";
 import { errorMessage } from "../errors";
+import { isRegistrationOpen } from "../tournaments";
 import {
   compressDocumentImage,
   compressPhoto,
@@ -12,6 +13,9 @@ export interface PlayerInput {
   nationality: string;
   position: string;
   jersey_number?: string;
+  /** Unity Cup only; "" from every other flow. Stored as NULL when blank. */
+  height_cm?: string;
+  preferred_foot?: string;
   photo?: File | null; // Player picture — PUBLIC (meant to be shown on squad pages)
   proof_of_age: File; // PRIVATE (minor's document)
 }
@@ -460,6 +464,19 @@ export async function submitRegistration(
 ): Promise<SubmitRegistrationResult> {
   const report = data.onProgress ?? (() => {});
 
+  // Refuse a closed tournament before a single byte is uploaded.
+  //
+  // The flow's layout already replaces every step page with the closed notice,
+  // so nobody can reach this by navigating. What this catches is the tab that
+  // was ALREADY open, mid-registration, when the tournament closed: it still
+  // holds a filled-in form and a live Submit button, and without this check it
+  // would happily write an entry nobody is going to honour.
+  if (!isRegistrationOpen(data.tournament_slug)) {
+    throw new Error(
+      "Registration for this tournament is closed, so this entry was not saved. Nothing was uploaded. If this team still needs to be entered, it has to be added by the organiser.",
+    );
+  }
+
   // Resolve tournament slug → id. Retried: this is the FIRST network call of the
   // whole submission, so a transient failure here used to abort a fully-typed
   // registration with the message "Invalid tournament selected" — which sent you
@@ -786,6 +803,11 @@ export async function submitRegistration(
         nationality: player.nationality,
         position: player.position,
         jersey_number: player.jersey_number ?? null,
+        // `||` not `??`: an untouched field arrives as "", and a stored empty
+        // string would make every display surface print a blank instead of
+        // skipping the field.
+        height_cm: player.height_cm || null,
+        preferred_foot: player.preferred_foot || null,
         photo_url: photoUrl, // public URL (safe to expose)
         proof_of_age_path: paths.age, // private path (sign on demand)
       });

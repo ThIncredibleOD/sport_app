@@ -26,7 +26,11 @@
  *
  *   node --env-file=.env.local scripts/enhance-extracted-photos.mjs
  *
- * Reads ./extracted-photos/, writes ./extracted-photos/<team>/upscaled/.
+ * Reads ./extracted-photos/, and per team writes:
+ *   upscaled/   352x352 squares
+ *   id-cards/   295x378 at 300dpi (25x32mm), named -SHARP or -soft so whoever
+ *               prints them can see which are real photographs at a glance
+ *
  * Touches nothing in the database or in storage.
  */
 
@@ -50,6 +54,15 @@ const supabase = createClient(url, key, { auth: { persistSession: false } });
 const OUT_ROOT = "extracted-photos";
 /** 352 = exactly 8x the 44px source, so every source pixel maps to a clean block. */
 const TARGET = 352;
+
+/**
+ * ID-card photo size: 25x32mm at 300dpi, the usual passport-style slot.
+ * Written with density metadata so dropping the file into a layout gives that
+ * physical size without anyone having to scale it by hand.
+ */
+const ID_W = 295;
+const ID_H = 378;
+const ID_DPI = 300;
 
 /* -------------------------------------------------------------------------- */
 /*  Upscaling                                                                 */
@@ -90,6 +103,142 @@ async function upscale(inputPath) {
     .sharpen({ sigma: 0.8, m1: 0.4, m2: 1.2 })
     .png({ compressionLevel: 9 })
     .toBuffer();
+}
+
+/**
+ * Lift a dark face to a printable brightness without wrecking the background.
+ *
+ * THE PROBLEM THESE PHOTOS HAVE
+ * They were taken indoors facing a window or a white wall, so the camera exposed
+ * for the background: shirt and wall sit near 255 while the face sits around 30.
+ * The frame as a whole is bright, so it is not "underexposed" in any way a mean
+ * or a histogram stretch would notice — sharp's own .normalise() finds nothing to
+ * do, and .gamma() is a no-op outside a resize pipeline. Multiplying brightness
+ * does lift the face, but it pushes the already-white background past 255 and the
+ * shirt turns into a flat white blob.
+ *
+ * WHAT THIS DOES INSTEAD
+ * A shadow-lift tone curve, out = 255*(in/255)^(1/g), applied through a 256-entry
+ * lookup table on the raw pixels. The curve pins both ends — 0 stays 0 and 255
+ * stays 255 — and bends hardest in the shadows, so a face at 35 rises to ~120
+ * while a shirt at 235 moves only to ~242. Nothing clips.
+ *
+ * `g` is chosen per photo from the 30th-percentile grey level of the subject
+ * region, not from its mean: the mean is dominated by the bright background,
+ * which is exactly the measurement that made the first attempt at this do
+ * nothing. A percentile finds the dark subject instead. Solving the curve for
+ * that level makes the correction self-limiting — a photo already sitting at the
+ * target gets g = 1.0 and is passed through untouched.
+ *
+ * This is tone mapping. It reveals detail already recorded in the pixels and
+ * invents none, which is the line this script does not cross for a child's ID
+ * photo. Capped at 2.4 because past that the shadows hold nothing but sensor
+ * noise and lifting only makes the noise visible.
+ */
+const LIFT_TARGET = 110; // where the subject's shadow level should land, 0-255
+const LIFT_MAX = 2.4;
+
+function liftTable(gamma) {
+  const table = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) {
+    table[i] = Math.round(255 * Math.pow(i / 255, 1 / gamma));
+  }
+  return table;
+}
+
+/** 30th-percentile grey level over the subject area (centre, upper two thirds). */
+async function shadowLevel(buffer, width, height) {
+  const pixels = await sharp(buffer)
+    .extract({
+      left: Math.round(width * 0.25),
+      top: Math.round(height * 0.12),
+      width: Math.round(width * 0.5),
+      height: Math.round(height * 0.58),
+    })
+    .greyscale()
+    .raw()
+    .toBuffer();
+
+  const histogram = new Array(256).fill(0);
+  for (const value of pixels) histogram[value]++;
+
+  const needed = pixels.length * 0.3;
+  let cumulative = 0;
+  for (let level = 0; level < 256; level++) {
+    cumulative += histogram[level];
+    if (cumulative >= needed) return level;
+  }
+  return 255;
+}
+
+async function autoExpose(buffer, width, height) {
+  const shadow = await shadowLevel(buffer, width, height);
+  const gamma = Math.min(
+    LIFT_MAX,
+    Math.max(1, Math.log(Math.max(shadow, 1) / 255) / Math.log(LIFT_TARGET / 255)),
+  );
+
+  if (gamma <= 1.02) return { buffer, gamma: 1, shadow };
+
+  const table = liftTable(gamma);
+  const { data, info } = await sharp(buffer)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i++) data[i] = table[data[i]];
+
+  const lifted = await sharp(data, {
+    raw: { width: info.width, height: info.height, channels: info.channels },
+  })
+    // The curve is applied per channel, which flattens colour slightly. A small
+    // saturation nudge puts it back; luminance contrast is left alone, since
+    // adding any would re-darken the face the lift just recovered.
+    .modulate({ saturation: 1.12 })
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+
+  return { buffer: lifted, gamma, shadow };
+}
+
+/**
+ * A print-ready 295x378 portrait for an ID card.
+ *
+ * `fit: "cover"` crops the sides rather than padding with white bands, and never
+ * stretches — a distorted face on an identity document is worse than a tight one.
+ * The source is already a centre crop (the PDF thumbnail was made with cover fit
+ * too), so the head sits in the middle and the ~11% taken off each side is
+ * background. Check the output by eye for anyone with wide shoulders in frame.
+ *
+ * `fromFullRes` skips the upscale chain entirely: those four photos are real
+ * 540x720 (or 405x720) originals, so this is a DOWNSCALE for them and the result
+ * is a genuinely sharp card photo, not a rescued one.
+ */
+async function idCard(input, fromFullRes) {
+  const source = fromFullRes ? sharp(input) : sharp(await upscale(input));
+  const resized = await source
+    .resize(ID_W, ID_H, {
+      kernel: "lanczos3",
+      fit: "cover",
+      // A full-res 540x720 is TALLER than the card ratio, so the crop comes off
+      // the height — take it from the bottom (chest) and keep the head, which is
+      // what an ID photo needs. The upscaled square is cropped on the WIDTH
+      // instead, and it is already a symmetric centre crop, so centre it.
+      position: fromFullRes ? "top" : "centre",
+    })
+    .png()
+    .toBuffer();
+
+  // Exposure before the final sharpen: sharpening a dark frame first would just
+  // sharpen its noise, and the lift would then magnify that.
+  const { buffer, gamma, shadow } = await autoExpose(resized, ID_W, ID_H);
+
+  const out = await sharp(buffer)
+    .sharpen({ sigma: 0.7, m1: 0.4, m2: 1.1 })
+    .withMetadata({ density: ID_DPI })
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+
+  return { out, gamma, shadow };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -207,12 +356,52 @@ for (const teamDir of teamDirs) {
     await writeFile(out, await upscale(path.join(dir, thumb)));
     console.log(`  ${TARGET}x${TARGET}  ${out}`);
   }
+
+  /* ---- print-ready ID card photos ---- */
+  // Where a full-resolution original survived the overwrite, use it instead of
+  // the thumbnail. Matched by the name slug both filenames were built from.
+  const fullRes = new Map(
+    files
+      .filter((f) => f.startsWith("FULL-RES-"))
+      .map((f) => [f.replace(/^FULL-RES-/, "").replace(/\.jpg$/, ""), f]),
+  );
+
+  const cardDir = path.join(dir, "id-cards");
+  await mkdir(cardDir, { recursive: true });
+
+  for (const thumb of thumbs) {
+    const who = /^\d+-(player-\d+-.+)-44x44\.jpg$/.exec(thumb)?.[1];
+    if (!who) continue;
+
+    const slug = who.replace(/^player-\d+-/, "");
+    const survivor = fullRes.get(slug);
+    // The suffix is the point: it tells whoever prints the cards which photos are
+    // real and which are rescued 44x44 thumbnails, without them having to guess.
+    const source = survivor ? path.join(dir, survivor) : path.join(dir, thumb);
+    const out = path.join(cardDir, `${who}-${survivor ? "SHARP" : "soft"}.png`);
+
+    const { out: bytes, gamma, shadow } = await idCard(source, Boolean(survivor));
+    await writeFile(out, bytes);
+
+    const lift =
+      gamma > 1
+        ? `shadow ${shadow}/255 lifted, curve ${gamma.toFixed(2)}`
+        : `shadow ${shadow}/255, no lift needed`;
+    console.log(
+      `  ${ID_W}x${ID_H} @${ID_DPI}dpi  ${out}\n` +
+        `      ${survivor ? "full-res original, " : ""}${lift}`,
+    );
+  }
 }
 
 console.log(
-  `\nDone. These are resampled ${TARGET}x${TARGET} versions of 44x44 sources —\n` +
-    `clean edges, but no detail that wasn't in the thumbnail. Before settling for\n` +
-    `them, check the device the photos were uploaded from: the originals were\n` +
-    `only ever read from it, never moved, so they should still be in its gallery\n` +
-    `or download folder.`,
+  `\nDone.\n` +
+    `  <team>/upscaled/   ${TARGET}x${TARGET} square, resampled from 44x44\n` +
+    `  <team>/id-cards/   ${ID_W}x${ID_H} at ${ID_DPI}dpi = 25x32mm, ready to place\n\n` +
+    `Files marked SHARP came from a surviving full-resolution original and are\n` +
+    `true photographs. Files marked soft are rescued 44x44 thumbnails: clean\n` +
+    `edges, right person, but no fine detail — no resampling invents the ~100,000\n` +
+    `pixels the thumbnail never held. Before settling for those, check the device\n` +
+    `the photos were uploaded from: the originals were only ever read from it,\n` +
+    `never moved, so they should still be in its gallery or download folder.`,
 );

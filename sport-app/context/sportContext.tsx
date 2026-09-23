@@ -31,6 +31,15 @@ export type Player = {
   nationality: string;
   jerseyNumber: string;
   position: string;
+  /**
+   * Height in centimetres, and preferred foot. Collected by the Unity Cup form
+   * only — the league and secondary flows never render an input for them, so
+   * their players carry "" and every display surface skips them. They live on
+   * the shared type rather than a Unity-specific one because this type is what
+   * the context, the review screen, the PDF and the submit payload all speak.
+   */
+  heightCm: string;
+  preferredFoot: string;
   proofOfAge: File | null;
   passportPreview: string | null;
 };
@@ -48,6 +57,8 @@ export const createEmptyPlayer = (): Player => ({
   nationality: "",
   jerseyNumber: "",
   position: "",
+  heightCm: "",
+  preferredFoot: "",
   proofOfAge: null,
   passportPreview: null,
 });
@@ -61,6 +72,9 @@ export const createEmptyPlayer = (): Player => ({
  *
  * The signed parental consent form is deliberately NOT checked here — it is
  * handed over on paper at the registration desk, not uploaded.
+ *
+ * Height and preferred foot are deliberately NOT checked either: they are
+ * optional extras on one cup's form, and a player without them is complete.
  */
 export const playerBlockingGaps = (player: Player): string[] => {
   if (!player.fullName.trim()) return [];

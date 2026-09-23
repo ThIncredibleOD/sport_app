@@ -102,6 +102,8 @@ export async function GET(request: NextRequest) {
           nationality,
           jersey_number,
           position,
+          height_cm,
+          preferred_foot,
           proof_of_age_path,
           photo_url
         )
