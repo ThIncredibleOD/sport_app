@@ -30,7 +30,11 @@
  */
 
 /** The URL segment under /register/ — note the U16 flow is `league`. */
-export type FlowSegment = "league" | "secondary-cup" | "unity-cup";
+export type FlowSegment =
+  | "league"
+  | "secondary-cup"
+  | "unity-cup"
+  | "peace-cup";
 
 export type Tournament = {
   flow: FlowSegment;
@@ -83,6 +87,15 @@ export const TOURNAMENTS: Tournament[] = [
     name: "Unity Cup",
     subtitle: "The Nathaniel Idowu Unity Cup",
     logo: "/unity.png",
+    registrationOpen: true,
+    playerCount: 20,
+  },
+  {
+    flow: "peace-cup",
+    slug: "peace-cup",
+    name: "Peace Cup",
+    subtitle: "The Hon. Olumoh-Ajegunle Peace Cup",
+    logo: "/peace-cup.png",
     registrationOpen: true,
     playerCount: 20,
   },

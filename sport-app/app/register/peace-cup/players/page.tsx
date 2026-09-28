@@ -1,0 +1,352 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Plus,
+  AlertTriangle,
+} from "lucide-react";
+import {
+  useRegister,
+  createEmptyPlayer,
+  playerBlockingGaps,
+} from "@/context/sportContext";
+import PhotoUpload from "@/components/PhotoUpload";
+import { PREFERRED_FOOT_OPTIONS } from "@/lib/height";
+
+const BACK_ROUTE = "/register/peace-cup/assistant-coach";
+const REVIEW_ROUTE = "/register/peace-cup/review";
+const LOGO_SRC = "/peace-cup.png";
+const LOGO_ALT = "The Hon. Olumoh-Ajegunle Peace Cup";
+
+export default function PlayerRegistration() {
+  const { players, setPlayers } = useRegister();
+  const router = useRouter();
+
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const total = players.length;
+  const isLast = currentIndex === total - 1;
+  const currentPlayer = players[currentIndex];
+
+  // A squad is rarely 18 deep. Without this, the only way out of the carousel is
+  // the "Review Registration" label on the LAST card, so an 11-player team meant
+  // clicking "Add Player" through 7 empty ones — with a queue waiting. Offer the
+  // exit as soon as one player is complete, using the same rule the review and
+  // submit screens apply, so anything that can leave here can also be submitted.
+  const completedCount = players.filter(
+    (p) =>
+      p.fullName.trim().length > 0 &&
+      playerBlockingGaps(p, false).length === 0,
+  ).length;
+  const canReview = completedCount > 0;
+
+  const handlePrevPlayer = () => {
+    if (currentIndex > 0) setCurrentIndex((prev) => prev - 1);
+  };
+
+  const handleNextPlayer = () => {
+    if (currentIndex < total - 1) setCurrentIndex((prev) => prev + 1);
+  };
+
+  const handleClearPlayer = () => {
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[currentIndex] = createEmptyPlayer();
+      return updated;
+    });
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[currentIndex] = { ...updated[currentIndex], [name]: value };
+      return updated;
+    });
+  };
+
+  const handlePlayerPhoto = (file: File | null) => {
+    // PhotoUpload has already downscaled and JPEG-encoded this. We keep a
+    // preview URL in context so the review screen's roster grid can render a
+    // thumbnail without re-deriving one per row.
+    const previewUrl = file ? URL.createObjectURL(file) : null;
+    setPlayers((prev) => {
+      const updated = [...prev];
+      updated[currentIndex] = {
+        ...updated[currentIndex],
+        passport: file,
+        passportPreview: previewUrl,
+      };
+      return updated;
+    });
+  };
+
+  // Advance through the carousel; on the last player, move on to the review
+  // screen (data persists in context — nothing is submitted here).
+  const handleAddPlayerSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!isLast) {
+      setCurrentIndex((prev) => prev + 1);
+    } else {
+      router.push(REVIEW_ROUTE);
+    }
+  };
+
+  const handleBottomBack = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    } else {
+      router.push(BACK_ROUTE);
+    }
+  };
+
+  if (!currentPlayer) return null;
+
+  return (
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden py-10">
+      <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-white/20 bg-slate-900/40 p-6 sm:p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl text-white">
+        {/* Top Back Link */}
+        <div className="w-full flex justify-start relative z-10 mb-2">
+          <button
+            type="button"
+            onClick={() => router.push(BACK_ROUTE)}
+            className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back</span>
+          </button>
+        </div>
+
+        {/* Logo Banner & Number Indicator */}
+        <div className="flex flex-col items-center relative z-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={LOGO_SRC}
+            alt={LOGO_ALT}
+            className="h-20 w-auto object-contain mb-1"
+          />
+
+          <span className="inline-flex items-center rounded-full bg-white/20 border border-[#16a34a]/40 px-3 py-0.5 text-xs font-semibold text-slate-400">
+            Player {currentIndex + 1} of {total}
+          </span>
+        </div>
+
+        {/* Top Navigation Controls */}
+        <div className="flex items-center justify-between w-full relative z-10 my-3 px-1">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrevPlayer}
+              disabled={currentIndex === 0}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 bg-slate-950/40 text-slate-300 transition-all ${
+                currentIndex === 0
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-slate-950/70 hover:text-white"
+              }`}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextPlayer}
+              disabled={isLast}
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 bg-slate-950/40 text-slate-300 transition-all ${
+                isLast
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-slate-950/70 hover:text-white"
+              }`}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleClearPlayer}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/40 bg-red-950/30 text-red-400 hover:bg-red-900/50 transition-all"
+            title="Clear Current Player Input"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Form Fields */}
+        <form
+          className="mt-4 space-y-3.5 relative z-10"
+          onSubmit={handleAddPlayerSubmit}
+        >
+          {/* Passport photo — live camera, phone camera, or a file */}
+          <div className="flex flex-col items-center justify-center gap-2 py-1">
+            <PhotoUpload
+              value={currentPlayer.passport}
+              onChange={handlePlayerPhoto}
+              label="Upload Passport"
+              shape="square"
+            />
+          </div>
+
+          {/* Player Full Name */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Player Full Name
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              value={currentPlayer.fullName}
+              onChange={handleChange}
+              placeholder="e.g. John Doe"
+              className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none transition-all"
+            />
+          </div>
+
+          {/* Date Of Birth */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Date Of Birth
+            </label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={currentPlayer.dateOfBirth}
+              onChange={handleChange}
+              className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white focus:border-[#16a34a] focus:outline-none transition-all [color-scheme:dark]"
+            />
+          </div>
+
+          {/* Nationality */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Nationality
+            </label>
+            <input
+              type="text"
+              name="nationality"
+              value={currentPlayer.nationality}
+              onChange={handleChange}
+              placeholder="e.g. Nigerian"
+              className="w-full rounded-md border border-white/15 bg-slate-950/40 px-3 py-2 text-xs text-white placeholder-slate-400 focus:border-[#16a34a] focus:outline-none transition-all"
+            />
+          </div>
+
+          {/* Jersey No. (1 - 99) */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Jersey No.
+            </label>
+            <select
+              name="jerseyNumber"
+              value={currentPlayer.jerseyNumber}
+              onChange={handleChange}
+              className="w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-xs text-slate-200 focus:border-[#16a34a] focus:outline-none transition-all"
+            >
+              <option value="" disabled>
+                Select Jersey Number
+              </option>
+              {Array.from({ length: 99 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num}>
+                  {num}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Position Selection */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Position
+            </label>
+            <select
+              name="position"
+              value={currentPlayer.position}
+              onChange={handleChange}
+              className="w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-xs text-slate-200 focus:border-[#16a34a] focus:outline-none transition-all"
+            >
+              <option value="" disabled>
+                Select Player Position
+              </option>
+              <option value="Goalkeeper">Goalkeeper</option>
+              <option value="Defender">Defender</option>
+              <option value="Midfielder">Midfielder</option>
+              <option value="Forward">Forward</option>
+            </select>
+          </div>
+
+          {/* Preferred Foot */}
+          <div>
+            <label className="block text-xs font-medium text-slate-200 mb-1">
+              Preferred Foot{" "}
+            
+            </label>
+            <select
+              name="preferredFoot"
+              value={currentPlayer.preferredFoot}
+              onChange={handleChange}
+              className="w-full rounded-md border border-white/15 bg-slate-950/80 px-3 py-2 text-xs text-slate-200 focus:border-[#16a34a] focus:outline-none transition-all"
+            >
+              <option value="">Select Preferred Foot</option>
+              {PREFERRED_FOOT_OPTIONS.map((foot) => (
+                <option key={foot} value={foot}>
+                  {foot}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Warning */}
+          <div className="flex items-start gap-1.5 pt-1 text-[11px] text-amber-500">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-px" />
+            <span>
+              Please ensure all player information is accurate.
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="pt-3 space-y-2">
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#16a34a] py-2.5 px-4 text-xs font-semibold text-white hover:bg-[#15803d] transition-all shadow-lg shadow-emerald-950/50"
+            >
+              {isLast ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
+              <span>{isLast ? "Review Registration" : "Add Player"}</span>
+            </button>
+
+            {canReview && !isLast && (
+              <button
+                type="button"
+                onClick={() => router.push(REVIEW_ROUTE)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-md border border-[#16a34a]/50 bg-[#16a34a]/10 py-2.5 px-4 text-xs font-semibold text-emerald-200 hover:bg-[#16a34a]/20 transition-all"
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span>
+                  Review Registration ({completedCount} player
+                  {completedCount === 1 ? "" : "s"})
+                </span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleBottomBack}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-white/15 bg-slate-950/60 py-2 px-4 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-all"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

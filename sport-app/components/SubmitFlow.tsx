@@ -35,6 +35,10 @@ type Props = {
   reviewRoute: string;
   /** Where to land after a successful submission. Gets ?reg= & ?pdf= appended. */
   confirmationRoute: string;
+  /** Whether every named player must provide an age document. */
+  requireProofOfAge?: boolean;
+  /** Whether player height is collected for this competition. */
+  includeHeight?: boolean;
 };
 
 /**
@@ -64,6 +68,8 @@ export default function SubmitFlow({
   logoAlt,
   reviewRoute,
   confirmationRoute,
+  requireProofOfAge = true,
+  includeHeight = true,
 }: Props) {
   const router = useRouter();
   const {
@@ -133,7 +139,7 @@ export default function SubmitFlow({
   ).length;
 
   const playersWithGaps = filledPlayers.filter(
-    (p) => playerBlockingGaps(p).length > 0,
+    (p) => playerBlockingGaps(p, requireProofOfAge).length > 0,
   ).length;
   const hasNoPlayers = filledPlayers.length === 0;
   const isComplete =
@@ -193,7 +199,7 @@ export default function SubmitFlow({
           nationality: p.nationality,
           jersey_number: p.jerseyNumber,
           position: p.position,
-          height_cm: p.heightCm,
+          height_cm: includeHeight ? p.heightCm : "",
           preferred_foot: p.preferredFoot,
           photo: p.passport,
         })),
@@ -211,7 +217,7 @@ export default function SubmitFlow({
         height_cm: p.heightCm,
         preferred_foot: p.preferredFoot,
         photo: p.passport,
-        proof_of_age: p.proofOfAge as File,
+        proof_of_age: requireProofOfAge ? p.proofOfAge : null,
       }));
 
       const { id, receipt_pdf_url } = await submitRegistration({
@@ -230,6 +236,7 @@ export default function SubmitFlow({
         assistant_coach: toOfficialInput(assistantCoach),
         medics: medics.map((medic) => toOfficialInput(medic)),
         players: playerInputs,
+        requireProofOfAge,
         receipt_pdf_blob: pdfBlob,
         progress: progressRef.current,
         onProgress: setStatusText,

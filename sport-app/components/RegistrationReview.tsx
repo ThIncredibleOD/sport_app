@@ -34,6 +34,8 @@ type Props = {
   editRoute: string;
   /** Where "Continue to Submit" advances to (must stay inside this flow's provider). */
   submitRoute: string;
+  /** Whether every named player must provide an age document. */
+  requireProofOfAge?: boolean;
 };
 
 /** Small helper: derive a temporary object URL for a File, cleaning it up on change/unmount. */
@@ -149,6 +151,7 @@ export default function RegistrationReview({
   tournamentName,
   editRoute,
   submitRoute,
+  requireProofOfAge = true,
 }: Props) {
   const {
     academyProfile,
@@ -169,7 +172,7 @@ export default function RegistrationReview({
   // hard requirements so an incomplete team can't reach the submit step and fail
   // partway through the upload.
   const playerGaps = new Map(
-    players.map((p) => [p.id, playerBlockingGaps(p)]),
+    players.map((p) => [p.id, playerBlockingGaps(p, requireProofOfAge)]),
   );
   const playersWithGaps = players.filter(
     (p) => (playerGaps.get(p.id) ?? []).length > 0,

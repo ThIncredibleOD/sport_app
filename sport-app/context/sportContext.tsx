@@ -76,14 +76,17 @@ export const createEmptyPlayer = (): Player => ({
  * Height and preferred foot are deliberately NOT checked either: they are
  * optional extras on one cup's form, and a player without them is complete.
  */
-export const playerBlockingGaps = (player: Player): string[] => {
+export const playerBlockingGaps = (
+  player: Player,
+  requireProofOfAge = true,
+): string[] => {
   if (!player.fullName.trim()) return [];
   const gaps: string[] = [];
   if (!player.dateOfBirth.trim()) gaps.push("date of birth");
   if (!player.nationality.trim()) gaps.push("nationality");
   if (!player.jerseyNumber.trim()) gaps.push("jersey number");
   if (!player.position.trim()) gaps.push("position");
-  if (!player.proofOfAge) gaps.push("proof of age");
+  if (requireProofOfAge && !player.proofOfAge) gaps.push("proof of age");
   return gaps;
 };
 

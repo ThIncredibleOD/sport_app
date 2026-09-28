@@ -17,7 +17,7 @@ export interface PlayerInput {
   height_cm?: string;
   preferred_foot?: string;
   photo?: File | null; // Player picture — PUBLIC (meant to be shown on squad pages)
-  proof_of_age: File; // PRIVATE (minor's document)
+  proof_of_age?: File | null; // PRIVATE (minor's document, when required)
 }
 
 /**
@@ -61,6 +61,8 @@ export interface RegistrationInput {
   /** Up to two medics, in order. Missing entries count as absent. */
   medics?: (OfficialInput | null | undefined)[];
   players: PlayerInput[];
+  /** Defaults true; Peace Cup registrations intentionally omit this document. */
+  requireProofOfAge?: boolean;
   /**
    * Pre-rendered roster summary PDF (generated client-side from the in-memory
    * File objects). Stored in a PUBLIC bucket so the registrant can download it
@@ -463,6 +465,7 @@ export async function submitRegistration(
   data: RegistrationInput,
 ): Promise<SubmitRegistrationResult> {
   const report = data.onProgress ?? (() => {});
+  const requireProofOfAge = data.requireProofOfAge ?? true;
 
   // Refuse a closed tournament before a single byte is uploaded.
   //
@@ -571,7 +574,9 @@ export async function submitRegistration(
     players.map(async (p) => ({
       ...p,
       photo: p.photo ? await ensureUnderCap(p.photo, "photo") : null,
-      proof_of_age: await ensureUnderCap(p.proof_of_age, "document"),
+      proof_of_age: p.proof_of_age
+        ? await ensureUnderCap(p.proof_of_age, "document")
+        : null,
     })),
   );
 
@@ -584,7 +589,12 @@ export async function submitRegistration(
   prepared.forEach((p, i) => {
     const who = p.full_name.trim() || `Player ${i + 1}`;
     if (p.photo) validateFile(p.photo, "image", `${who}'s photo`);
-    validateFile(p.proof_of_age, "doc", `${who}'s proof of age`);
+    if (requireProofOfAge && !p.proof_of_age) {
+      throw new Error(`${who}'s proof of age is required.`);
+    }
+    if (p.proof_of_age) {
+      validateFile(p.proof_of_age, "doc", `${who}'s proof of age`);
+    }
   });
 
   const regId = data.id ?? newRegistrationId();
@@ -620,9 +630,11 @@ export async function submitRegistration(
     photo: player.photo
       ? `${regId}/photo_${index + 1}_${sanitizeFileName(player.photo.name)}`
       : null,
-    age: `${regId}/age_${index + 1}_${sanitizeFileName(
-      player.proof_of_age.name,
-    )}`,
+    age: player.proof_of_age
+      ? `${regId}/age_${index + 1}_${sanitizeFileName(
+          player.proof_of_age.name,
+        )}`
+      : null,
   }));
 
   assertUniquePaths([
@@ -664,7 +676,15 @@ export async function submitRegistration(
         ...(photo
           ? [{ bucket: "player-photos", path: photo, label: `${who}'s photo` }]
           : []),
-        { bucket: "proof-of-age", path: age, label: `${who}'s proof of age` },
+        ...(age
+          ? [
+              {
+                bucket: "proof-of-age",
+                path: age,
+                label: `${who}'s proof of age`,
+              },
+            ]
+          : []),
       ];
     }),
   ]);
@@ -787,14 +807,16 @@ export async function submitRegistration(
         photoUrl = publicUrl("player-photos", paths.photo);
       }
 
-      // Proof of age — PRIVATE bucket. Store the PATH; read via signed URL.
-      await uploadToBucket(
-        "proof-of-age",
-        paths.age,
-        player.proof_of_age,
-        undefined,
-        progress,
-      );
+      // Proof of age is PRIVATE and optional for competitions that opt out.
+      if (player.proof_of_age && paths.age) {
+        await uploadToBucket(
+          "proof-of-age",
+          paths.age,
+          player.proof_of_age,
+          undefined,
+          progress,
+        );
+      }
 
       await insertWithRetry("players", {
         registration_id: regId,

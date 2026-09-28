@@ -118,7 +118,7 @@ ALTER TABLE tournaments
 -- rather than one UPDATE so re-running this file always restores the intended
 -- state, even if somebody flipped a flag by hand in the dashboard.
 UPDATE tournaments SET registration_open = FALSE WHERE slug =  'u16-league';
-UPDATE tournaments SET registration_open = TRUE  WHERE slug IN ('secondary-cup', 'unity-cup');
+UPDATE tournaments SET registration_open = TRUE  WHERE slug IN ('secondary-cup', 'unity-cup', 'peace-cup');
 
 
 -- ----------------------------------------------------------------------------
