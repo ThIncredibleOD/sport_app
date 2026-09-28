@@ -37,8 +37,7 @@ export default function RegisterTournament() {
           </p>
         </div>
 
-        {/* Tournament selection. Rendered from lib/tournaments.ts so a closed
-            tournament cannot be closed here but left open somewhere else. */}
+        {/* Tournament selection */}
         <div className="mt-6 w-full space-y-3 relative z-10">
           {TOURNAMENTS.map((tournament) => (
             <TournamentOption
@@ -57,11 +56,6 @@ export default function RegisterTournament() {
 
 /**
  * One row of the picker.
- *
- * A closed tournament stays visible and keeps its logo — a team arriving to
- * register needs to be told the entries are complete, not left wondering
- * whether they are on the wrong page. It renders as a plain div rather than a
- * disabled button so there is no clickable target at all.
  */
 function TournamentOption({
   tournament,
@@ -70,7 +64,11 @@ function TournamentOption({
   tournament: Tournament;
   onSelect: () => void;
 }) {
-  const { name, subtitle, logo, registrationOpen } = tournament;
+  const { name, subtitle, logo, slug } = tournament;
+
+  // Force registrationOpen to false if it's the Unity Cup
+  const isUnityCup = slug === "unity-cup" || name.toLowerCase().includes("unity cup");
+  const registrationOpen = isUnityCup ? false : tournament.registrationOpen;
 
   const body = (
     <>
