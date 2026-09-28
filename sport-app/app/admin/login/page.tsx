@@ -1,16 +1,22 @@
 "use client";
 
-import { useState, type SubmitEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, AlertCircle } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Read and decode the redirect path if present
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo = rawRedirect ? decodeURIComponent(rawRedirect) : null;
+
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
@@ -36,8 +42,16 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Success — the httpOnly cookie is now set, redirect to approvals
-      router.push("/admin/approvals");
+      // Ensure document.cookie is set for Option 1 client-side check
+      if (!document.cookie.includes("admin_token=")) {
+        document.cookie = "admin_token=authenticated; path=/; max-age=86400";
+      }
+
+      // Redirect dynamically:
+      // 1. Goes to /register/unity-cup/account-profile if coming from Unity Cup registration
+      // 2. Falls back to /admin/approvals if logging in directly as admin
+      const destination = redirectTo || "/admin/approvals";
+      router.push(destination);
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -46,15 +60,16 @@ export default function AdminLoginPage() {
 
   return (
     <div className="relative min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      {/* Card */}
       <div className="w-full max-w-md bg-slate-900/40 border border-white/20 backdrop-blur-xl rounded-2xl p-8 shadow-2xl">
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-full bg-green-600/20 border border-green-500/30 flex items-center justify-center mb-4">
             <Lock className="w-8 h-8 text-green-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Admin Portal</h1>
-          <p className="text-slate-400 text-sm mt-2">
-            Enter your password to continue
+          <h1 className="text-2xl font-bold text-white">Admin Authentication</h1>
+          <p className="text-slate-400 text-sm mt-2 text-center">
+            {redirectTo
+              ? "Sign in as admin to access restricted tournament registration"
+              : "Enter your password to continue"}
           </p>
         </div>
 
@@ -90,7 +105,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition shadow-lg shadow-green-600/20"
           >
-            {loading ? "Verifying..." : "Sign In"}
+            {loading ? "Verifying..." : "Authenticate & Continue"}
           </button>
         </form>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -14,6 +14,24 @@ const LOGO_ALT = "The Nathaniel Idowu Unity Cup";
 export default function AccountProfile() {
   const { academyProfile, setAcademyProfile } = useRegister();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+
+  // Client-side authentication check
+  useEffect(() => {
+    // Check if the admin_token cookie exists in document.cookie
+    const hasAdminToken = document.cookie
+      .split("; ")
+      .some((item) => item.startsWith("admin_token="));
+
+    if (!hasAdminToken) {
+      // Redirect to admin login if no cookie is found
+      router.replace(
+        "/admin/login?redirect=/register/unity-cup/account-profile"
+      );
+    } else {
+      setIsAuthorized(true);
+    }
+  }, [router]);
 
   // PhotoUpload hands back an already-compressed JPEG File, so the logo is
   // under the upload cap the moment it's picked rather than at final submit.
@@ -21,11 +39,23 @@ export default function AccountProfile() {
     setAcademyProfile((prev) => ({ ...prev, logo: file }));
   };
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Nothing is sent here — the details live in context until the submit step.
+    // Details live in context until the final submit step.
     router.push(NEXT_ROUTE);
   };
+
+  // Prevent flash of form content while verifying credentials
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen w-full bg-slate-950 flex flex-col items-center justify-center text-white font-sans">
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+          <span>Verifying admin authorization...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden">
