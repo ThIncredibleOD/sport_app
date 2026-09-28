@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, Suspense, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, AlertCircle } from "lucide-react";
 
-export default function AdminLoginPage() {
+// 1. Move your main logic into a child component
+function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -42,14 +43,12 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Ensure document.cookie is set for Option 1 client-side check
+      // Ensure document.cookie is set for client-side authorization checks
       if (!document.cookie.includes("admin_token=")) {
         document.cookie = "admin_token=authenticated; path=/; max-age=86400";
       }
 
-      // Redirect dynamically:
-      // 1. Goes to /register/unity-cup/account-profile if coming from Unity Cup registration
-      // 2. Falls back to /admin/approvals if logging in directly as admin
+      // Redirect dynamically
       const destination = redirectTo || "/admin/approvals";
       router.push(destination);
     } catch {
@@ -110,5 +109,20 @@ export default function AdminLoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// 2. Export default wrapper with Suspense
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 text-sm">
+          Loading...
+        </div>
+      }
+    >
+      <AdminLoginForm />
+    </Suspense>
   );
 }
