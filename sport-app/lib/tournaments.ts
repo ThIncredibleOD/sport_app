@@ -94,7 +94,8 @@ export const TOURNAMENTS: Tournament[] = [
     name: "All Secondary School Cup",
     subtitle: "The Nathaniel Idowu 7s Football League",
     logo: "/secondary.png",
-    registrationOpen: true,
+    // CLOSED — entries for Secondary Cup are deactivated.
+    registrationOpen: false,
     adminOnly: false,
     playerCount: 15,
   },
