@@ -36,17 +36,16 @@ export default function RegisterTournament() {
               key={tournament.slug}
               tournament={tournament}
               onSelect={() => {
-                const isUnityCup =
-                  tournament.slug === "unity-cup" ||
-                  tournament.name.toLowerCase().includes("unity cup");
-
-                if (isUnityCup) {
-                  // Send to admin login with return destination
-                  const target = `/register/${tournament.flow}/account-profile`;
-                  router.push(`/admin/login?redirect=${encodeURIComponent(target)}`);
-                } else {
-                  router.push(`/register/${tournament.flow}/account-profile`);
-                }
+                const target = `/register/${tournament.flow}/account-profile`;
+                // Admin-only flows detour through login carrying where they
+                // were headed. This is convenience only — proxy.ts is what
+                // actually refuses the flow, because a router.push is trivially
+                // skipped by typing the URL.
+                router.push(
+                  tournament.adminOnly
+                    ? `/admin/login?redirect=${encodeURIComponent(target)}`
+                    : target,
+                );
               }}
             />
           ))}
@@ -63,40 +62,45 @@ function TournamentOption({
   tournament: Tournament;
   onSelect: () => void;
 }) {
-  const { name, subtitle, logo, slug, registrationOpen } = tournament;
-  const isUnityCup = slug === "unity-cup" || name.toLowerCase().includes("unity cup");
+  const { name, subtitle, logo, registrationOpen, adminOnly } = tournament;
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 hover:border-[#16a34a] hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a]"
+      // A closed tournament used to render its "Closed" badge and still
+      // navigate when clicked, dropping you into a flow that immediately
+      // replaced itself with the closed notice. The badge is now the truth.
+      disabled={!registrationOpen}
+      className="group flex w-full items-center justify-between rounded-xl border border-white/15 bg-slate-950/40 backdrop-blur-sm p-3.5 transition-all duration-200 enabled:hover:border-[#16a34a] enabled:hover:bg-slate-950/70 focus:outline-none focus:ring-1 focus:ring-[#16a34a] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="flex items-center gap-3 text-left">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900/60 p-1">
           <img src={logo} alt={name} className="h-full w-full object-contain" />
         </div>
         <div className="flex flex-col">
-          <span className="text-xs sm:text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
+          <span className="text-xs sm:text-sm font-semibold text-white group-enabled:group-hover:text-emerald-400 transition-colors">
             {name}
           </span>
           <span className="text-[10px] sm:text-xs font-normal text-slate-400">
-            {isUnityCup ? "Admin Login Required" : subtitle}
+            {registrationOpen && adminOnly ? "Admin Login Required" : subtitle}
           </span>
         </div>
       </div>
 
-      {isUnityCup ? (
+      {/* Closed is checked FIRST. A closed admin-only tournament previously
+          showed "Admin Only" and read as available. */}
+      {!registrationOpen ? (
+        <span className="shrink-0 rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+          Closed
+        </span>
+      ) : adminOnly ? (
         <span className="flex items-center gap-1 shrink-0 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[9px] sm:text-[10px] font-semibold tracking-wide text-amber-400">
           <Lock className="h-3 w-3" />
           Admin Only
         </span>
-      ) : registrationOpen ? (
-        <ArrowRight className="h-4 w-4 text-slate-300 shrink-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-emerald-400" />
       ) : (
-        <span className="shrink-0 rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-          Closed
-        </span>
+        <ArrowRight className="h-4 w-4 text-slate-300 shrink-0 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-emerald-400" />
       )}
     </button>
   );

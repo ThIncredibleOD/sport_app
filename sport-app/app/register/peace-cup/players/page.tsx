@@ -18,7 +18,7 @@ import {
 import PhotoUpload from "@/components/PhotoUpload";
 import { PREFERRED_FOOT_OPTIONS } from "@/lib/height";
 
-const BACK_ROUTE = "/register/peace-cup/assistant-coach";
+const BACK_ROUTE = "/register/peace-cup/medics";
 const REVIEW_ROUTE = "/register/peace-cup/review";
 const LOGO_SRC = "/peace-cup.png";
 const LOGO_ALT = "The Hon. Olumoh-Ajegunle Peace Cup";

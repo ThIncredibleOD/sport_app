@@ -6,7 +6,9 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRegister } from "@/context/sportContext";
 import Image from "next/image";
 import PhotoUpload from "@/components/PhotoUpload";
+import { tournamentByFlow } from "@/lib/tournaments";
 
+const TOURNAMENT = tournamentByFlow("league");
 const BACK_ROUTE = "/register/league/team-manager";
 const NEXT_ROUTE = "/register/league/assistant-coach";
 const LOGO_SRC = "/under1.png";
@@ -60,7 +62,7 @@ export default function AcademySquadRegistration() {
           </h1>
           <p className="mt-1.5 text-xs text-slate-300 max-w-xs leading-relaxed">
             Enter the details for each player/ head coach and upload their
-            required documents. You must register a minimum of 18 players and an
+            required documents. You can register up to {TOURNAMENT.playerCount} players and a
             head coach.
           </p>
         </div>

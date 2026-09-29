@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -11,27 +11,30 @@ const NEXT_ROUTE = "/register/unity-cup/team-manager";
 const LOGO_SRC = "/unity.png";
 const LOGO_ALT = "The Nathaniel Idowu Unity Cup";
 
+/**
+ * The Unity Cup entry step. Organiser-only — see proxy.ts.
+ *
+ * THERE IS NO AUTH CHECK IN THIS FILE, deliberately. There used to be one, and
+ * it was worse than nothing:
+ *
+ *   document.cookie.split("; ").some((i) => i.startsWith("admin_token="))
+ *
+ * `admin_token` was not the session cookie. The real one, `admin_auth`, is
+ * httpOnly and holds ADMIN_TOKEN; `admin_token=authenticated` was a second
+ * cookie the LOGIN PAGE set on itself purely so this line could read it. Which
+ * means the gate was one devtools line — `document.cookie = "admin_token=x"` —
+ * and it accepted any value, and its 24h max-age outlived the real 8h session
+ * by sixteen hours. It also guarded only this page: /register/unity-cup/
+ * team-manager and every step after it were never checked at all.
+ *
+ * proxy.ts now refuses the whole /register/unity-cup subtree unless the
+ * httpOnly cookie matches ADMIN_TOKEN, so this page is not reached without a
+ * real session and the client-side check is gone rather than left to imply a
+ * protection it never gave.
+ */
 export default function AccountProfile() {
   const { academyProfile, setAcademyProfile } = useRegister();
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
-
-  // Client-side authentication check
-  useEffect(() => {
-    // Check if the admin_token cookie exists in document.cookie
-    const hasAdminToken = document.cookie
-      .split("; ")
-      .some((item) => item.startsWith("admin_token="));
-
-    if (!hasAdminToken) {
-      // Redirect to admin login if no cookie is found
-      router.replace(
-        "/admin/login?redirect=/register/unity-cup/account-profile"
-      );
-    } else {
-      setIsAuthorized(true);
-    }
-  }, [router]);
 
   // PhotoUpload hands back an already-compressed JPEG File, so the logo is
   // under the upload cap the moment it's picked rather than at final submit.
@@ -44,18 +47,6 @@ export default function AccountProfile() {
     // Details live in context until the final submit step.
     router.push(NEXT_ROUTE);
   };
-
-  // Prevent flash of form content while verifying credentials
-  if (!isAuthorized) {
-    return (
-      <div className="min-h-screen w-full bg-slate-950 flex flex-col items-center justify-center text-white font-sans">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
-          <span>Verifying admin authorization...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-950 font-sans overflow-hidden">

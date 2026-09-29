@@ -4,14 +4,20 @@ import { useState, Suspense, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, AlertCircle } from "lucide-react";
 
+
+function safeRedirect(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+}
+
 // 1. Move your main logic into a child component
 function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  // Read and decode the redirect path if present
-  const rawRedirect = searchParams.get("redirect");
-  const redirectTo = rawRedirect ? decodeURIComponent(rawRedirect) : null;
+
+  // Where to land after a successful login, as handed over by proxy.ts.
+  const redirectTo = safeRedirect(searchParams.get("redirect"));
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -43,12 +49,11 @@ function AdminLoginForm() {
         return;
       }
 
-      // Ensure document.cookie is set for client-side authorization checks
-      if (!document.cookie.includes("admin_token=")) {
-        document.cookie = "admin_token=authenticated; path=/; max-age=86400";
-      }
-
-      // Redirect dynamically
+      // The session cookie is set by the response to the call above —
+      // httpOnly, so nothing here can or should touch it. This used to also
+      // write a readable `admin_token=authenticated` cookie for one
+      // client-side check in the Unity Cup flow; that check is gone (proxy.ts
+      // gates the route properly now), and with it the forgeable cookie.
       const destination = redirectTo || "/admin/approvals";
       router.push(destination);
     } catch {

@@ -1,5 +1,5 @@
 /**
- * The three tournaments, and which of them still accept new entries.
+ * The tournaments, and which of them still accept new entries.
  *
  * HOW TO OPEN OR CLOSE A TOURNAMENT
  * Flip `registrationOpen` below, then commit and push (Vercel redeploys on
@@ -24,9 +24,10 @@
  * edits in two places. Both are listed above.
  *
  * `slug` MUST match the `slug` column in the `tournaments` table — it is what
- * resolves a registration to its tournament. The canonical three are
- * u16-league, secondary-cup and unity-cup; the U16 one is NOT "u16-cup" or
- * "under-16", and a mismatch fails the submission at its first query.
+ * resolves a registration to its tournament. The canonical slugs are
+ * u16-league, secondary-cup, unity-cup and peace-cup; the U16 one is NOT
+ * "u16-cup" or "under-16", and a mismatch fails the submission at its first
+ * query.
  */
 
 /** The URL segment under /register/ — note the U16 flow is `league`. */
@@ -47,6 +48,20 @@ export type Tournament = {
   logo: string;
   /** false = no new entries. Existing registrations are untouched. */
   registrationOpen: boolean;
+  /**
+   * true = the picker routes through admin login before the flow opens.
+   *
+   * An explicit field rather than the name sniffing this replaces. The picker
+   * used to decide with `slug === "unity-cup" || name.toLowerCase().includes(
+   * "unity cup")`, written out twice in the same file, which would have stopped
+   * matching the moment the tournament was renamed — failing OPEN, straight
+   * into the flow.
+   *
+   * THIS IS A UI HINT, NOT THE GATE. The real refusal is in proxy.ts, which
+   * reads this same field. A client-side router.push can simply be skipped by
+   * typing the URL.
+   */
+  adminOnly: boolean;
   /**
    * How many players a squad may hold in this tournament.
    *
@@ -70,6 +85,7 @@ export const TOURNAMENTS: Tournament[] = [
     // registered can still add players up to playerCount through the portal:
     // this flag is about new teams, not about a squad fixing its own roster.
     registrationOpen: false,
+    adminOnly: false,
     playerCount: 25,
   },
   {
@@ -79,6 +95,7 @@ export const TOURNAMENTS: Tournament[] = [
     subtitle: "The Nathaniel Idowu 7s Football League",
     logo: "/secondary.png",
     registrationOpen: true,
+    adminOnly: false,
     playerCount: 15,
   },
   {
@@ -88,6 +105,9 @@ export const TOURNAMENTS: Tournament[] = [
     subtitle: "The Nathaniel Idowu Unity Cup",
     logo: "/unity.png",
     registrationOpen: true,
+    // Entered by the organiser at the venue, not by the public. proxy.ts turns
+    // this into an actual refusal.
+    adminOnly: true,
     playerCount: 20,
   },
   {
@@ -97,6 +117,7 @@ export const TOURNAMENTS: Tournament[] = [
     subtitle: "The Hon. Olumoh-Ajegunle Peace Cup",
     logo: "/peace-cup.png",
     registrationOpen: true,
+    adminOnly: false,
     playerCount: 20,
   },
 ];
@@ -134,4 +155,24 @@ export function isRegistrationOpen(slug: string): boolean {
  */
 export function playerLimitForSlug(slug: string): number {
   return TOURNAMENTS.find((t) => t.slug === slug)?.playerCount ?? 0;
+}
+
+/**
+ * Whether a /register/... path belongs to an adminOnly tournament.
+ *
+ * Read by proxy.ts, which is what actually refuses the request. It lives here
+ * so adding an admin-only tournament is one `adminOnly: true` in the list above
+ * and nothing else — the proxy matches all of /register and asks this.
+ *
+ * An UNKNOWN path returns false: /register itself, and every open flow, must
+ * stay public. The gate is opt-in per tournament, so a path this cannot resolve
+ * is treated as one of the public ones rather than locked by accident.
+ */
+export function registerPathRequiresAdmin(pathname: string): boolean {
+  return TOURNAMENTS.some(
+    (t) =>
+      t.adminOnly &&
+      (pathname === `/register/${t.flow}` ||
+        pathname.startsWith(`/register/${t.flow}/`)),
+  );
 }
