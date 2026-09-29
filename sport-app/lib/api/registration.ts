@@ -352,7 +352,12 @@ async function insertWithRetry(
 
 /**
  * Upload a validated file/blob and return its storage PATH (not a URL).
- * Use publicUrl (public buckets) or getSignedUrl (private buckets) to read.
+ *
+ * Reading is deliberately NOT this file's job. Public buckets are read with
+ * publicUrl below, which only builds a string. Private ones (proof-of-age) are
+ * read exclusively server-side under the service role — see
+ * app/api/team/document-url/route.ts — because the browser holds the anon key
+ * and the storage policies give it write access only.
  *
  * Retries transient failures. WHY: a full team is 38 uploads (18 photos + 18
  * proof-of-age documents + logo + coach), all typed in at the venue over venue
@@ -408,24 +413,19 @@ function publicUrl(bucket: string, path: string): string {
 }
 
 /**
- * Generate a short-lived signed URL for a PRIVATE bucket object.
+ * There is deliberately no browser-side signed-URL helper here.
  *
- * Only proof-of-age documents live in a private bucket. Nothing else sensitive
- * is uploaded any more — consent forms are collected on paper and no payment
- * document exists. Never make this bucket public: it holds minors' identity
- * documents.
+ * There used to be an exported `getSignedUrl(bucket: "proof-of-age", ...)`. It
+ * had no callers, and it could not have worked for one: it used the anon client,
+ * whose storage policies grant INSERT and UPDATE but no SELECT, so
+ * createSignedUrl is refused. Left in place it was an invitation — an exported,
+ * documented-looking helper whose only purpose was handing out links to minors'
+ * identity documents from the browser.
+ *
+ * Signing proof-of-age happens server-side only, behind a session check:
+ * app/api/team/document-url/route.ts (team) and
+ * app/api/admin/get-receipt-signed-url/route.ts (admin).
  */
-export async function getSignedUrl(
-  bucket: "proof-of-age",
-  path: string,
-  expiresInSeconds = 3600,
-): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(path, expiresInSeconds);
-  if (error) throw error;
-  return data.signedUrl;
-}
 
 /**
  * Cryptographically-random registration id, generated on the client.

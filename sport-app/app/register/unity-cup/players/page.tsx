@@ -19,7 +19,13 @@ import {
 } from "@/context/sportContext";
 import PhotoUpload from "@/components/PhotoUpload";
 import { compressDocumentImage, kb, MAX_UPLOAD_BYTES } from "@/lib/images";
-import { cmToFeetInches, PREFERRED_FOOT_OPTIONS } from "@/lib/height";
+import {
+  cmToFeetInches,
+  MAX_HEIGHT_CM,
+  MIN_HEIGHT_CM,
+  parseHeightCm,
+  PREFERRED_FOOT_OPTIONS,
+} from "@/lib/height";
 
 const BACK_ROUTE = "/register/unity-cup/medics";
 const REVIEW_ROUTE = "/register/unity-cup/review";
@@ -33,6 +39,7 @@ export default function PlayerRegistration() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [ageBusy, setAgeBusy] = useState(false);
   const [ageError, setAgeError] = useState<string | null>(null);
+  const [heightError, setHeightError] = useState<string | null>(null);
   const total = players.length;
   const isLast = currentIndex === total - 1;
   const currentPlayer = players[currentIndex];
@@ -67,6 +74,9 @@ export default function PlayerRegistration() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
+    // Clear the height complaint as soon as they start correcting it, rather
+    // than leaving a red line under a field they have already fixed.
+    if (name === "heightCm") setHeightError(null);
     setPlayers((prev) => {
       const updated = [...prev];
       updated[currentIndex] = { ...updated[currentIndex], [name]: value };
@@ -132,6 +142,25 @@ export default function PlayerRegistration() {
   // screen (data persists in context — nothing is submitted here).
   const handleAddPlayerSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Height is optional, but if it is filled in it has to be a height we can
+    // actually store. WHY THIS CHECK EXISTS: the field is `type="text"` with
+    // maxLength={3}, so "5.6" fits — and 42 players in the live database have a
+    // height between 4.7 and 5.9 because their academy entered FEET. Nothing
+    // refused it. parseHeightCm rejects a decimal, so those rows now render
+    // blank everywhere instead of claiming a 5cm footballer, but the entry was
+    // still silently lost. Refusing here is the difference between the typist
+    // fixing it in two seconds at the venue and the number being gone for good.
+    const rawHeight = (currentPlayer?.heightCm ?? "").trim();
+    if (rawHeight !== "" && parseHeightCm(rawHeight) === null) {
+      setHeightError(
+        `Enter the height in whole centimetres, between ${MIN_HEIGHT_CM} and ${MAX_HEIGHT_CM}. ` +
+          `A number like 5.9 is feet — 5'9" is about 175.`,
+      );
+      return;
+    }
+    setHeightError(null);
+
     if (!isLast) {
       setCurrentIndex((prev) => prev + 1);
     } else {
@@ -343,11 +372,14 @@ export default function PlayerRegistration() {
             </div>
             {/* Only rendered once the value converts, so a half-typed or
                 nonsensical number simply shows nothing rather than "0'0"". */}
-            {cmToFeetInches(currentPlayer.heightCm) && (
+            {!heightError && cmToFeetInches(currentPlayer.heightCm) && (
               <p className="mt-1 text-[10px] text-slate-400">
                 {currentPlayer.heightCm} cm ·{" "}
                 {cmToFeetInches(currentPlayer.heightCm)}
               </p>
+            )}
+            {heightError && (
+              <p className="mt-1 text-[10px] text-red-400">{heightError}</p>
             )}
           </div>
 
